@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/welcomeFragment">
+
+    <fragment android:id="@+id/welcomeFragment" android:name="com.marcfradera.shooterranking.ui.fragments.WelcomeFragment" android:label="Welcome">
+        <action android:id="@+id/action_welcome_to_login" app:destination="@id/loginFragment" />
+        <action android:id="@+id/action_welcome_to_signup" app:destination="@id/signupFragment" />
+        <action android:id="@+id/action_welcome_to_temporades" app:destination="@id/temporadesFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/loginFragment" android:name="com.marcfradera.shooterranking.ui.fragments.LoginFragment" android:label="Login">
+        <action android:id="@+id/action_login_to_temporades" app:destination="@id/temporadesFragment" />
+        <action android:id="@+id/action_login_to_verify" app:destination="@id/verifyFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/signupFragment" android:name="com.marcfradera.shooterranking.ui.fragments.SignupFragment" android:label="Signup">
+        <action android:id="@+id/action_signup_to_verify" app:destination="@id/verifyFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/verifyFragment" android:name="com.marcfradera.shooterranking.ui.fragments.VerifyFragment" android:label="Verify">
+        <action android:id="@+id/action_verify_to_temporades" app:destination="@id/temporadesFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/temporadesFragment" android:name="com.marcfradera.shooterranking.ui.fragments.TemporadesFragment" android:label="Temporades">
+        <action android:id="@+id/action_temporades_to_equips" app:destination="@id/equipsFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/equipsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.EquipsFragment" android:label="Equips">
+        <action android:id="@+id/action_equips_to_ranking" app:destination="@id/rankingFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/rankingFragment" android:name="com.marcfradera.shooterranking.ui.fragments.RankingFragment" android:label="Ranking">
+        <action android:id="@+id/action_ranking_to_player_stats" app:destination="@id/playerStatsFragment" />
+        <action android:id="@+id/action_ranking_to_shotmap" app:destination="@id/shotMapFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/playerStatsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.PlayerStatsFragment" android:label="Stats" />
+    <fragment android:id="@+id/shotMapFragment" android:name="com.marcfradera.shooterranking.ui.fragments.ShotMapFragment" android:label="ShotMap" />
+
+</navigation>

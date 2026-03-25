@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "749970064338",
+    "project_id": "shooterranking-2cfbb",
+    "storage_bucket": "shooterranking-2cfbb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:749970064338:android:bc76d5062fd8ca1ffabe0b",
+        "android_client_info": {
+          "package_name": "com.marcfradera.shooterranking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnYC0hlR-fsks8-47s6kGs74sirz1rLeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

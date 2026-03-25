@@ -1,0 +1,901 @@
+package com.marcfradera.shooterranking.ui.screens
+
+import android.content.Context
+import android.content.Intent
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marcfradera.shooterranking.data.model.Sessio
+import com.marcfradera.shooterranking.ui.vm.ShotSessionViewModel
+import java.io.File
+import java.io.FileOutputStream
+
+private enum class StatsFilter(val label: String) {
+    ALL("Totes"),
+    THREE_PT("Triples"),
+    FREE_THROW("Tir lliure"),
+    TWO_PT("Tirs de 2")
+}
+
+private data class ProgressPoint(
+    val sessionIndex: Int,
+    val value: Float?
+)
+
+private data class SessionTableRow(
+    val label: String,
+    val tlMade: Int,
+    val tlAttempted: Int,
+    val t2Made: Int,
+    val t2Attempted: Int,
+    val t3Made: Int,
+    val t3Attempted: Int,
+    val totalMade: Int,
+    val totalAttempted: Int,
+    val rightPct: Float?,
+    val leftPct: Float?,
+    val bestSide: String,
+    val bestZoneT2: String,
+    val bestZoneT3: String
+)
+
+@Composable
+fun PlayerStatsScreen(
+    idJugador: String,
+    nomJugador: String,
+    onBack: () -> Unit
+) {
+    val vm: ShotSessionViewModel = viewModel()
+    var selectedFilter by remember { mutableStateOf(StatsFilter.ALL) }
+    val context = LocalContext.current
+
+    LaunchedEffect(idJugador) {
+        vm.load(idJugador)
+    }
+
+    val sessionsState = vm.sessions
+    val sessions = sessionsState.data ?: emptyList()
+
+    val orderedSessions = remember(sessions) {
+        sessions.sortedBy { it.num_sessio }
+    }
+
+    val tripleData = remember(orderedSessions) {
+        orderedSessions.mapIndexed { index, s ->
+            ProgressPoint(index, s.threePointPct())
+        }
+    }
+
+    val freeThrowData = remember(orderedSessions) {
+        orderedSessions.mapIndexed { index, s ->
+            ProgressPoint(index, s.freeThrowPct())
+        }
+    }
+
+    val twoPointData = remember(orderedSessions) {
+        orderedSessions.mapIndexed { index, s ->
+            ProgressPoint(index, s.twoPointPct())
+        }
+    }
+
+    val tableRows = remember(orderedSessions) {
+        orderedSessions.map { s ->
+            s.toTableRow()
+        }
+    }
+
+    val totalRow = remember(orderedSessions) {
+        buildTotalRow(orderedSessions)
+    }
+
+    CenteredScaffold(
+        title = nomJugador,
+        onBack = onBack
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 24.dp)
+        ) {
+            when {
+                sessionsState.loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                sessionsState.error != null -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = sessionsState.error ?: "Error carregant sessions",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                orderedSessions.isEmpty() -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Aquest jugador encara no té sessions")
+                    }
+                }
+
+                else -> {
+                    Text(
+                        text = "Gràfic de progrés per sessions",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        StatsFilter.entries.forEach { filter ->
+                            FilterChip(
+                                selected = selectedFilter == filter,
+                                onClick = { selectedFilter = filter },
+                                label = { Text(filter.label) }
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(430.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            ProgressChart(
+                                sessionCount = orderedSessions.size,
+                                showTriple = selectedFilter == StatsFilter.ALL || selectedFilter == StatsFilter.THREE_PT,
+                                showFreeThrow = selectedFilter == StatsFilter.ALL || selectedFilter == StatsFilter.FREE_THROW,
+                                showTwoPoint = selectedFilter == StatsFilter.ALL || selectedFilter == StatsFilter.TWO_PT,
+                                tripleData = tripleData,
+                                freeThrowData = freeThrowData,
+                                twoPointData = twoPointData
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    LegendRow(
+                        showTriple = selectedFilter == StatsFilter.ALL || selectedFilter == StatsFilter.THREE_PT,
+                        showFreeThrow = selectedFilter == StatsFilter.ALL || selectedFilter == StatsFilter.FREE_THROW,
+                        showTwoPoint = selectedFilter == StatsFilter.ALL || selectedFilter == StatsFilter.TWO_PT
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+
+                    Text(
+                        text = "Taula per sessions",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    SessionStatsTable(
+                        rows = tableRows,
+                        totalRow = totalRow
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            try {
+                                exportPlayerStatsPdfAndShare(
+                                    context = context,
+                                    nomJugador = nomJugador,
+                                    sessions = orderedSessions
+                                )
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    e.message ?: "No s'ha pogut generar el PDF",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Exportar estadístiques a PDF")
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressChart(
+    sessionCount: Int,
+    showTriple: Boolean,
+    showFreeThrow: Boolean,
+    showTwoPoint: Boolean,
+    tripleData: List<ProgressPoint>,
+    freeThrowData: List<ProgressPoint>,
+    twoPointData: List<ProgressPoint>
+) {
+    val tripleColor = Color(0xFF1565C0)
+    val freeThrowColor = Color(0xFFD81B60)
+    val twoPointColor = Color(0xFFEF6C00)
+    val axisColor = Color.Black
+    val gridColor = Color(0xFFD6D6D6)
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        val leftPad = 110f
+        val rightPad = 32f
+        val topPad = 70f
+        val bottomPad = 85f
+
+        val chartWidth = size.width - leftPad - rightPad
+        val chartHeight = size.height - topPad - bottomPad
+
+        if (chartWidth <= 0f || chartHeight <= 0f) return@Canvas
+
+        fun xFor(index: Int): Float {
+            if (sessionCount <= 1) return leftPad + chartWidth / 2f
+            return leftPad + (index.toFloat() / (sessionCount - 1).toFloat()) * chartWidth
+        }
+
+        fun yFor(value: Float): Float {
+            val clamped = value.coerceIn(0f, 100f)
+            return topPad + chartHeight - (clamped / 100f) * chartHeight
+        }
+
+        val labelPaint = Paint().apply {
+            color = android.graphics.Color.BLACK
+            textSize = 28f
+            isAntiAlias = true
+        }
+
+        val titlePaint = Paint().apply {
+            color = android.graphics.Color.BLACK
+            textSize = 30f
+            isAntiAlias = true
+            isFakeBoldText = true
+        }
+
+        val yTicks = listOf(0, 25, 50, 75, 100)
+        yTicks.forEach { tick ->
+            val y = yFor(tick.toFloat())
+            drawLine(
+                color = gridColor,
+                start = Offset(leftPad, y),
+                end = Offset(leftPad + chartWidth, y),
+                strokeWidth = 2f
+            )
+            drawContext.canvas.nativeCanvas.drawText(
+                "$tick%",
+                leftPad - 78f,
+                y + 10f,
+                labelPaint
+            )
+        }
+
+        drawLine(
+            color = axisColor,
+            start = Offset(leftPad, topPad),
+            end = Offset(leftPad, topPad + chartHeight),
+            strokeWidth = 3f
+        )
+
+        drawLine(
+            color = axisColor,
+            start = Offset(leftPad, topPad + chartHeight),
+            end = Offset(leftPad + chartWidth, topPad + chartHeight),
+            strokeWidth = 3f
+        )
+
+        val xTicks = when {
+            sessionCount <= 1 -> listOf(1)
+            sessionCount <= 6 -> (1..sessionCount).toList()
+            else -> {
+                val middle = ((sessionCount - 1) / 2) + 1
+                listOf(1, middle, sessionCount).distinct()
+            }
+        }
+
+        xTicks.forEach { tick ->
+            val x = xFor(tick - 1)
+            drawLine(
+                color = axisColor,
+                start = Offset(x, topPad + chartHeight),
+                end = Offset(x, topPad + chartHeight + 10f),
+                strokeWidth = 3f
+            )
+            drawContext.canvas.nativeCanvas.drawText(
+                tick.toString(),
+                x - 8f,
+                topPad + chartHeight + 38f,
+                labelPaint
+            )
+        }
+
+        fun drawSeries(points: List<ProgressPoint>, color: Color) {
+            data class ChartPoint(
+                val sessionIndex: Int,
+                val value: Float,
+                val isReal: Boolean
+            )
+
+            if (points.isEmpty()) return
+
+            val realPoints = points.mapNotNull { point ->
+                point.value?.let { value ->
+                    ChartPoint(
+                        sessionIndex = point.sessionIndex,
+                        value = value,
+                        isReal = true
+                    )
+                }
+            }
+
+            if (realPoints.isEmpty()) return
+
+            val linePoints = mutableListOf<ChartPoint>()
+            val firstReal = realPoints.first()
+
+            if (firstReal.sessionIndex > 0) {
+                linePoints += ChartPoint(
+                    sessionIndex = 0,
+                    value = 0f,
+                    isReal = false
+                )
+            }
+
+            linePoints += realPoints
+
+            if (linePoints.size == 1) {
+                val point = linePoints.first()
+                if (point.isReal) {
+                    drawCircle(
+                        color = color,
+                        radius = 7f,
+                        center = Offset(
+                            xFor(point.sessionIndex),
+                            yFor(point.value)
+                        )
+                    )
+                }
+                return
+            }
+
+            val path = Path()
+            linePoints.forEachIndexed { i, point ->
+                val x = xFor(point.sessionIndex)
+                val y = yFor(point.value)
+
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+
+            drawPath(
+                path = path,
+                color = color,
+                style = Stroke(width = 5f, cap = StrokeCap.Round)
+            )
+
+            linePoints
+                .filter { it.isReal }
+                .forEach { point ->
+                    drawCircle(
+                        color = color,
+                        radius = 6f,
+                        center = Offset(
+                            xFor(point.sessionIndex),
+                            yFor(point.value)
+                        )
+                    )
+                }
+        }
+
+        if (showTriple) drawSeries(tripleData, tripleColor)
+        if (showFreeThrow) drawSeries(freeThrowData, freeThrowColor)
+        if (showTwoPoint) drawSeries(twoPointData, twoPointColor)
+
+        drawContext.canvas.nativeCanvas.drawText(
+            "% encert",
+            leftPad - 35f,
+            topPad - 25f,
+            titlePaint
+        )
+
+        drawContext.canvas.nativeCanvas.drawText(
+            "Sessions",
+            leftPad + chartWidth / 2f - 55f,
+            size.height - 18f,
+            titlePaint
+        )
+    }
+}
+
+@Composable
+private fun LegendRow(
+    showTriple: Boolean,
+    showFreeThrow: Boolean,
+    showTwoPoint: Boolean
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (showTriple) {
+            LegendItem(
+                color = Color(0xFF1565C0),
+                text = "Triples"
+            )
+        }
+
+        if (showFreeThrow) {
+            LegendItem(
+                color = Color(0xFFD81B60),
+                text = "Tir lliure"
+            )
+        }
+
+        if (showTwoPoint) {
+            LegendItem(
+                color = Color(0xFFEF6C00),
+                text = "Tirs de 2"
+            )
+        }
+    }
+}
+
+@Composable
+private fun LegendItem(
+    color: Color,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(28.dp)
+                .height(10.dp)
+                .background(color, RoundedCornerShape(50))
+        )
+        Text(text)
+    }
+}
+
+@Composable
+private fun SessionStatsTable(
+    rows: List<SessionTableRow>,
+    totalRow: SessionTableRow
+) {
+    val scroll = rememberScrollState()
+    val borderColor = Color(0xFFBDBDBD)
+
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(
+            modifier = Modifier
+                .horizontalScroll(scroll)
+                .padding(12.dp)
+                .border(1.dp, borderColor)
+        ) {
+            Column {
+                SessionTableHeader()
+                rows.forEach { row ->
+                    SessionTableDataRow(row = row, isTotal = false)
+                }
+                SessionTableDataRow(row = totalRow, isTotal = true)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionTableHeader() {
+    Row {
+        HeaderCell("Sessió", 90.dp)
+        HeaderCell("TL", 90.dp)
+        HeaderCell("TL %", 80.dp)
+        HeaderCell("T2", 90.dp)
+        HeaderCell("T2%", 80.dp)
+        HeaderCell("T3", 90.dp)
+        HeaderCell("T3%", 80.dp)
+        HeaderCell("TOTAL", 100.dp)
+        HeaderCell("TOTAL %", 90.dp)
+        HeaderCell("Dreta %", 90.dp)
+        HeaderCell("Esquerra %", 100.dp)
+        HeaderCell("Millor costat", 110.dp)
+        HeaderCell("Millor zona T2", 130.dp)
+        HeaderCell("Millor zona T3", 130.dp)
+    }
+}
+
+@Composable
+private fun SessionTableDataRow(
+    row: SessionTableRow,
+    isTotal: Boolean
+) {
+    val weight = if (isTotal) FontWeight.Bold else FontWeight.Normal
+
+    Row {
+        DataCell(row.label, 90.dp, weight, isTotal)
+        DataCell("${row.tlMade}/${row.tlAttempted}", 90.dp, weight, isTotal)
+        DataCell(formatPct(row.tlMade, row.tlAttempted), 80.dp, weight, isTotal)
+        DataCell("${row.t2Made}/${row.t2Attempted}", 90.dp, weight, isTotal)
+        DataCell(formatPct(row.t2Made, row.t2Attempted), 80.dp, weight, isTotal)
+        DataCell("${row.t3Made}/${row.t3Attempted}", 90.dp, weight, isTotal)
+        DataCell(formatPct(row.t3Made, row.t3Attempted), 80.dp, weight, isTotal)
+        DataCell("${row.totalMade}/${row.totalAttempted}", 100.dp, weight, isTotal)
+        DataCell(formatPct(row.totalMade, row.totalAttempted), 90.dp, weight, isTotal)
+        DataCell(row.rightPct.toPrettyPercentOrDash(), 90.dp, weight, isTotal)
+        DataCell(row.leftPct.toPrettyPercentOrDash(), 100.dp, weight, isTotal)
+        DataCell(row.bestSide, 110.dp, weight, isTotal)
+        DataCell(row.bestZoneT2, 130.dp, weight, isTotal)
+        DataCell(row.bestZoneT3, 130.dp, weight, isTotal)
+    }
+}
+
+@Composable
+private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
+    Box(
+        modifier = Modifier
+            .width(width)
+            .border(1.dp, Color(0xFF8A8A8A))
+            .background(Color(0xFFF5F5F5))
+            .padding(vertical = 8.dp, horizontal = 6.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = text,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+private fun DataCell(
+    text: String,
+    width: androidx.compose.ui.unit.Dp,
+    weight: FontWeight,
+    isTotal: Boolean = false
+) {
+    Box(
+        modifier = Modifier
+            .width(width)
+            .border(1.dp, Color(0xFF8A8A8A))
+            .background(if (isTotal) Color(0xFFF0F7FF) else Color.White)
+            .padding(vertical = 8.dp, horizontal = 6.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = text,
+            fontWeight = weight,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black
+        )
+    }
+}
+
+private fun Sessio.toTableRow(): SessionTableRow {
+    val tlMade = fets_pos_6
+    val tlAttempted = tirs_pos_6
+
+    val t2Made = fets_pos_4 + fets_pos_5 + fets_pos_7 + fets_pos_8 + fets_pos_9
+    val t2Attempted = tirs_pos_4 + tirs_pos_5 + tirs_pos_7 + tirs_pos_8 + tirs_pos_9
+
+    val t3Made = fets_pos_1 + fets_pos_2 + fets_pos_3 + fets_pos_10 + fets_pos_11
+    val t3Attempted = tirs_pos_1 + tirs_pos_2 + tirs_pos_3 + tirs_pos_10 + tirs_pos_11
+
+    val totalMade = tlMade + t2Made + t3Made
+    val totalAttempted = tlAttempted + t2Attempted + t3Attempted
+
+    val rightMade = fets_pos_1 + fets_pos_4 + fets_pos_7 + fets_pos_10
+    val rightAttempted = tirs_pos_1 + tirs_pos_4 + tirs_pos_7 + tirs_pos_10
+
+    val leftMade = fets_pos_3 + fets_pos_5 + fets_pos_9 + fets_pos_11
+    val leftAttempted = tirs_pos_3 + tirs_pos_5 + tirs_pos_9 + tirs_pos_11
+
+    val rightPct = pctOrNull(rightMade, rightAttempted)
+    val leftPct = pctOrNull(leftMade, leftAttempted)
+
+    return SessionTableRow(
+        label = "Sessió $num_sessio",
+        tlMade = tlMade,
+        tlAttempted = tlAttempted,
+        t2Made = t2Made,
+        t2Attempted = t2Attempted,
+        t3Made = t3Made,
+        t3Attempted = t3Attempted,
+        totalMade = totalMade,
+        totalAttempted = totalAttempted,
+        rightPct = rightPct,
+        leftPct = leftPct,
+        bestSide = bestSideLabel(rightPct, leftPct),
+        bestZoneT2 = bestZoneT2Label(this),
+        bestZoneT3 = bestZoneT3Label(this)
+    )
+}
+
+private fun buildTotalRow(sessions: List<Sessio>): SessionTableRow {
+    val tlMade = sessions.sumOf { it.fets_pos_6 }
+    val tlAttempted = sessions.sumOf { it.tirs_pos_6 }
+
+    val t2Made = sessions.sumOf { it.fets_pos_4 + it.fets_pos_5 + it.fets_pos_7 + it.fets_pos_8 + it.fets_pos_9 }
+    val t2Attempted = sessions.sumOf { it.tirs_pos_4 + it.tirs_pos_5 + it.tirs_pos_7 + it.tirs_pos_8 + it.tirs_pos_9 }
+
+    val t3Made = sessions.sumOf { it.fets_pos_1 + it.fets_pos_2 + it.fets_pos_3 + it.fets_pos_10 + it.fets_pos_11 }
+    val t3Attempted = sessions.sumOf { it.tirs_pos_1 + it.tirs_pos_2 + it.tirs_pos_3 + it.tirs_pos_10 + it.tirs_pos_11 }
+
+    val totalMade = tlMade + t2Made + t3Made
+    val totalAttempted = tlAttempted + t2Attempted + t3Attempted
+
+    val rightMade = sessions.sumOf { it.fets_pos_1 + it.fets_pos_4 + it.fets_pos_7 + it.fets_pos_10 }
+    val rightAttempted = sessions.sumOf { it.tirs_pos_1 + it.tirs_pos_4 + it.tirs_pos_7 + it.tirs_pos_10 }
+
+    val leftMade = sessions.sumOf { it.fets_pos_3 + it.fets_pos_5 + it.fets_pos_9 + it.fets_pos_11 }
+    val leftAttempted = sessions.sumOf { it.tirs_pos_3 + it.tirs_pos_5 + it.tirs_pos_9 + it.tirs_pos_11 }
+
+    val merged = Sessio(
+        num_sessio = 0,
+        id_jugador = sessions.firstOrNull()?.id_jugador ?: "",
+        fets_pos_1 = sessions.sumOf { it.fets_pos_1 },
+        tirs_pos_1 = sessions.sumOf { it.tirs_pos_1 },
+        fets_pos_2 = sessions.sumOf { it.fets_pos_2 },
+        tirs_pos_2 = sessions.sumOf { it.tirs_pos_2 },
+        fets_pos_3 = sessions.sumOf { it.fets_pos_3 },
+        tirs_pos_3 = sessions.sumOf { it.tirs_pos_3 },
+        fets_pos_4 = sessions.sumOf { it.fets_pos_4 },
+        tirs_pos_4 = sessions.sumOf { it.tirs_pos_4 },
+        fets_pos_5 = sessions.sumOf { it.fets_pos_5 },
+        tirs_pos_5 = sessions.sumOf { it.tirs_pos_5 },
+        fets_pos_6 = sessions.sumOf { it.fets_pos_6 },
+        tirs_pos_6 = sessions.sumOf { it.tirs_pos_6 },
+        fets_pos_7 = sessions.sumOf { it.fets_pos_7 },
+        tirs_pos_7 = sessions.sumOf { it.tirs_pos_7 },
+        fets_pos_8 = sessions.sumOf { it.fets_pos_8 },
+        tirs_pos_8 = sessions.sumOf { it.tirs_pos_8 },
+        fets_pos_9 = sessions.sumOf { it.fets_pos_9 },
+        tirs_pos_9 = sessions.sumOf { it.tirs_pos_9 },
+        fets_pos_10 = sessions.sumOf { it.fets_pos_10 },
+        tirs_pos_10 = sessions.sumOf { it.tirs_pos_10 },
+        fets_pos_11 = sessions.sumOf { it.fets_pos_11 },
+        tirs_pos_11 = sessions.sumOf { it.tirs_pos_11 }
+    )
+
+    return SessionTableRow(
+        label = "Total",
+        tlMade = tlMade,
+        tlAttempted = tlAttempted,
+        t2Made = t2Made,
+        t2Attempted = t2Attempted,
+        t3Made = t3Made,
+        t3Attempted = t3Attempted,
+        totalMade = totalMade,
+        totalAttempted = totalAttempted,
+        rightPct = pctOrNull(rightMade, rightAttempted),
+        leftPct = pctOrNull(leftMade, leftAttempted),
+        bestSide = bestSideLabel(pctOrNull(rightMade, rightAttempted), pctOrNull(leftMade, leftAttempted)),
+        bestZoneT2 = bestZoneT2Label(merged),
+        bestZoneT3 = bestZoneT3Label(merged)
+    )
+}
+
+private fun bestZoneT2Label(s: Sessio): String {
+    val zones = listOf(
+        TripleZone("Poste alt dreta", s.fets_pos_4, s.tirs_pos_4),
+        TripleZone("Poste alt esquerra", s.fets_pos_5, s.tirs_pos_5),
+        TripleZone("Poste baix dreta", s.fets_pos_7, s.tirs_pos_7),
+        TripleZone("Ampolla", s.fets_pos_8, s.tirs_pos_8),
+        TripleZone("Poste baix esquerra", s.fets_pos_9, s.tirs_pos_9)
+    ).filter { it.attempted > 0 }
+
+    if (zones.isEmpty()) return "-"
+
+    return zones.maxWithOrNull(
+        compareBy<TripleZone> { it.pct() }.thenBy { it.attempted }
+    )?.label ?: "-"
+}
+
+private fun bestZoneT3Label(s: Sessio): String {
+    val zones = listOf(
+        TripleZone("45 dreta", s.fets_pos_1, s.tirs_pos_1),
+        TripleZone("Mig", s.fets_pos_2, s.tirs_pos_2),
+        TripleZone("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
+        TripleZone("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
+        TripleZone("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
+    ).filter { it.attempted > 0 }
+
+    if (zones.isEmpty()) return "-"
+
+    return zones.maxWithOrNull(
+        compareBy<TripleZone> { it.pct() }.thenBy { it.attempted }
+    )?.label ?: "-"
+}
+
+private data class TripleZone(
+    val label: String,
+    val made: Int,
+    val attempted: Int
+) {
+    fun pct(): Float = if (attempted <= 0) 0f else made.toFloat() / attempted.toFloat()
+}
+
+private fun bestSideLabel(rightPct: Float?, leftPct: Float?): String {
+    return when {
+        rightPct == null && leftPct == null -> "-"
+        rightPct != null && leftPct == null -> "Dreta"
+        rightPct == null && leftPct != null -> "Esquerra"
+        rightPct!! > leftPct!! -> "Dreta"
+        leftPct > rightPct -> "Esquerra"
+        else -> "Igual"
+    }
+}
+
+private fun formatPct(made: Int, attempted: Int): String {
+    val pct = pctOrNull(made, attempted) ?: return "-"
+    return "${pct.toInt()}%"
+}
+
+private fun Float?.toPrettyPercentOrDash(): String {
+    return this?.let { "${it.toInt()}%" } ?: "-"
+}
+
+private fun Sessio.threePointPct(): Float? {
+    val made = fets_pos_1 + fets_pos_2 + fets_pos_3 + fets_pos_10 + fets_pos_11
+    val attempted = tirs_pos_1 + tirs_pos_2 + tirs_pos_3 + tirs_pos_10 + tirs_pos_11
+    return pctOrNull(made, attempted)
+}
+
+private fun Sessio.freeThrowPct(): Float? {
+    return pctOrNull(fets_pos_6, tirs_pos_6)
+}
+
+private fun Sessio.twoPointPct(): Float? {
+    val made = fets_pos_4 + fets_pos_5 + fets_pos_7 + fets_pos_8 + fets_pos_9
+    val attempted = tirs_pos_4 + tirs_pos_5 + tirs_pos_7 + tirs_pos_8 + tirs_pos_9
+    return pctOrNull(made, attempted)
+}
+
+private fun pctOrNull(made: Int, attempted: Int): Float? {
+    if (attempted <= 0) return null
+    return (made.toFloat() / attempted.toFloat()) * 100f
+}
+
+private fun exportPlayerStatsPdfAndShare(
+    context: Context,
+    nomJugador: String,
+    sessions: List<Sessio>
+) {
+    val document = PdfDocument()
+    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+    val page = document.startPage(pageInfo)
+    val canvas = page.canvas
+
+    val titlePaint = Paint().apply {
+        textSize = 20f
+        isFakeBoldText = true
+    }
+
+    val textPaint = Paint().apply {
+        textSize = 12f
+    }
+
+    var y = 40f
+    canvas.drawText("Estadístiques de $nomJugador", 40f, y, titlePaint)
+    y += 30f
+
+    sessions.sortedBy { it.num_sessio }.forEach { s ->
+        val totalMade =
+            s.fets_pos_1 + s.fets_pos_2 + s.fets_pos_3 + s.fets_pos_4 + s.fets_pos_5 +
+                    s.fets_pos_6 + s.fets_pos_7 + s.fets_pos_8 + s.fets_pos_9 + s.fets_pos_10 + s.fets_pos_11
+        val totalAttempted =
+            s.tirs_pos_1 + s.tirs_pos_2 + s.tirs_pos_3 + s.tirs_pos_4 + s.tirs_pos_5 +
+                    s.tirs_pos_6 + s.tirs_pos_7 + s.tirs_pos_8 + s.tirs_pos_9 + s.tirs_pos_10 + s.tirs_pos_11
+        val pct = if (totalAttempted == 0) 0 else ((totalMade * 100f) / totalAttempted).toInt()
+
+        canvas.drawText(
+            "Sessió ${s.num_sessio}: $totalMade/$totalAttempted  $pct%",
+            40f,
+            y,
+            textPaint
+        )
+        y += 20f
+    }
+
+    document.finishPage(page)
+
+    val file = File(context.cacheDir, "stats_${nomJugador.replace(" ", "_")}.pdf")
+    FileOutputStream(file).use { output ->
+        document.writeTo(output)
+    }
+    document.close()
+
+    val uri: Uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file
+    )
+
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/pdf"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    context.startActivity(Intent.createChooser(intent, "Compartir PDF"))
+}
