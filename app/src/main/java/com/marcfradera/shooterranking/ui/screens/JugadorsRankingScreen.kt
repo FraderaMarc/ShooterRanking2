@@ -14,21 +14,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -93,133 +86,137 @@ fun JugadorsRankingScreen(
     }
 
     CenteredScaffold(title = "Classificació", onBack = onBack) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Button(
-                onClick = { showDialog = true },
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Afegir jugador")
-            }
+                Button(
+                    onClick = { showDialog = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Afegir jugador")
+                }
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        try {
-                            val players = vm.loadPlayersForExport(idEquip)
-                            if (players.isEmpty()) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val players = vm.loadPlayersForExport(idEquip)
+                                if (players.isEmpty()) {
+                                    Toast.makeText(
+                                        context,
+                                        "No hi ha jugadores per exportar",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } else {
+                                    exportAllPlayersStatsPdfAndShare(
+                                        context = context,
+                                        players = players
+                                    )
+                                }
+                            } catch (e: Exception) {
                                 Toast.makeText(
                                     context,
-                                    "No hi ha jugadores per exportar",
+                                    e.message ?: "No s'ha pogut generar el PDF",
                                     Toast.LENGTH_LONG
                                 ).show()
-                            } else {
-                                exportAllPlayersStatsPdfAndShare(
-                                    context = context,
-                                    players = players
-                                )
                             }
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                context,
-                                e.message ?: "No s'ha pogut generar el PDF",
-                                Toast.LENGTH_LONG
-                            ).show()
                         }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Exportar equip PDF")
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            RankingFilter.entries.forEach { filter ->
-                FilterChip(
-                    selected = selectedFilter == filter,
-                    onClick = { selectedFilter = filter },
-                    label = { Text(filter.label) }
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        when {
-            vm.ranking.loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
+                    },
+                    modifier = Modifier.weight(1f)
                 ) {
-                    CircularProgressIndicator()
+                    Text("Exportar equip PDF")
                 }
             }
 
-            vm.ranking.error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = vm.ranking.error ?: "Error",
-                        color = MaterialTheme.colorScheme.error
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                RankingFilter.entries.forEach { filter ->
+                    FilterChip(
+                        selected = selectedFilter == filter,
+                        onClick = { selectedFilter = filter },
+                        label = { Text(filter.label) }
                     )
                 }
             }
 
-            else -> {
-                val ranked = vm.ranking.data ?: emptyList()
+            Spacer(Modifier.height(16.dp))
 
-                if (ranked.isEmpty()) {
+            when {
+                vm.ranking.loading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Encara no hi ha jugadores.")
+                        CircularProgressIndicator()
                     }
-                } else {
-                    LazyColumn(
+                }
+
+                vm.ranking.error != null -> {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        contentAlignment = Alignment.Center
                     ) {
-                        itemsIndexed(
-                            items = ranked,
-                            key = { _, item -> item.jugador.id_jugador }
-                        ) { idx, item ->
-                            PlayerRow(
-                                rank = idx + 1,
-                                item = item,
-                                onStats = {
-                                    onOpenStats(
-                                        item.jugador.id_jugador,
-                                        item.jugador.nom_jugador
-                                    )
-                                },
-                                onShots = {
-                                    onOpenShotMap(
-                                        item.jugador.id_jugador,
-                                        item.jugador.nom_jugador
-                                    )
-                                },
-                                onEdit = { editItem = item },
-                                onDelete = { deleteItem = item }
-                            )
+                        Text(
+                            text = vm.ranking.error ?: "Error",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                else -> {
+                    val ranked = vm.ranking.data ?: emptyList()
+
+                    if (ranked.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Encara no hi ha jugadores.")
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            itemsIndexed(
+                                items = ranked,
+                                key = { _, item -> item.jugador.id_jugador }
+                            ) { idx, item ->
+                                PlayerRow(
+                                    rank = idx + 1,
+                                    item = item,
+                                    onStats = {
+                                        onOpenStats(
+                                            item.jugador.id_jugador,
+                                            item.jugador.nom_jugador
+                                        )
+                                    },
+                                    onShots = {
+                                        onOpenShotMap(
+                                            item.jugador.id_jugador,
+                                            item.jugador.nom_jugador
+                                        )
+                                    },
+                                    onEdit = { editItem = item },
+                                    onDelete = { deleteItem = item }
+                                )
+                            }
                         }
                     }
                 }
