@@ -14,8 +14,13 @@ class ShotMapFragment : BaseComposeFragment() {
         val state = shared.selection.value ?: return
 
         ShotMapScreen(
-            idJugador = state.jugadorId,
-            onBack = { requireActivity().onBackPressedDispatcher.onBackPressed() }
+            idEquip = state.equipId,
+            initialJugadorId = state.jugadorId,
+            initialJugadorNom = state.jugadorNom,
+            onBack = { requireActivity().onBackPressedDispatcher.onBackPressed() },
+            onJugadorChanged = { jugadorId, nomJugador ->
+                shared.setJugador(jugadorId, nomJugador)
+            }
         )
     }
 }

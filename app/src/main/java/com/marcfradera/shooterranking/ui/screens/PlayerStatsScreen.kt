@@ -3,6 +3,8 @@ package com.marcfradera.shooterranking.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.graphics.Paint
+import android.graphics.Path as AndroidPath
+import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.widget.Toast
@@ -45,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +55,7 @@ import com.marcfradera.shooterranking.data.model.Sessio
 import com.marcfradera.shooterranking.ui.vm.ShotSessionViewModel
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.sqrt
 
 private enum class StatsFilter(val label: String) {
     ALL("Totes"),
@@ -81,6 +85,19 @@ private data class SessionTableRow(
     val bestZoneT2: String,
     val bestZoneT3: String
 )
+
+private data class PlayerPdfColumn(
+    val title: String,
+    val width: Float
+)
+
+private data class PlayerZoneStat(
+    val label: String,
+    val made: Int,
+    val attempted: Int
+) {
+    fun pct(): Float = if (attempted <= 0) 0f else made.toFloat() / attempted.toFloat()
+}
 
 @Composable
 fun PlayerStatsScreen(
@@ -122,9 +139,7 @@ fun PlayerStatsScreen(
     }
 
     val tableRows = remember(orderedSessions) {
-        orderedSessions.map { s ->
-            s.toTableRow()
-        }
+        orderedSessions.map { it.toTableRow() }
     }
 
     val totalRow = remember(orderedSessions) {
@@ -132,7 +147,7 @@ fun PlayerStatsScreen(
     }
 
     CenteredScaffold(
-        title = nomJugador,
+        title = "Estadistiques $nomJugador",
         onBack = onBack
     ) {
         Column(
@@ -593,15 +608,15 @@ private fun SessionTableDataRow(
     Row {
         DataCell(row.label, 90.dp, weight, isTotal)
         DataCell("${row.tlMade}/${row.tlAttempted}", 90.dp, weight, isTotal)
-        DataCell(formatPct(row.tlMade, row.tlAttempted), 80.dp, weight, isTotal)
+        DataCell(playerFormatPct(row.tlMade, row.tlAttempted), 80.dp, weight, isTotal)
         DataCell("${row.t2Made}/${row.t2Attempted}", 90.dp, weight, isTotal)
-        DataCell(formatPct(row.t2Made, row.t2Attempted), 80.dp, weight, isTotal)
+        DataCell(playerFormatPct(row.t2Made, row.t2Attempted), 80.dp, weight, isTotal)
         DataCell("${row.t3Made}/${row.t3Attempted}", 90.dp, weight, isTotal)
-        DataCell(formatPct(row.t3Made, row.t3Attempted), 80.dp, weight, isTotal)
+        DataCell(playerFormatPct(row.t3Made, row.t3Attempted), 80.dp, weight, isTotal)
         DataCell("${row.totalMade}/${row.totalAttempted}", 100.dp, weight, isTotal)
-        DataCell(formatPct(row.totalMade, row.totalAttempted), 90.dp, weight, isTotal)
-        DataCell(row.rightPct.toPrettyPercentOrDash(), 90.dp, weight, isTotal)
-        DataCell(row.leftPct.toPrettyPercentOrDash(), 100.dp, weight, isTotal)
+        DataCell(playerFormatPct(row.totalMade, row.totalAttempted), 90.dp, weight, isTotal)
+        DataCell(row.rightPct.toPlayerPercentOrDash(), 90.dp, weight, isTotal)
+        DataCell(row.leftPct.toPlayerPercentOrDash(), 100.dp, weight, isTotal)
         DataCell(row.bestSide, 110.dp, weight, isTotal)
         DataCell(row.bestZoneT2, 130.dp, weight, isTotal)
         DataCell(row.bestZoneT3, 130.dp, weight, isTotal)
@@ -609,7 +624,7 @@ private fun SessionTableDataRow(
 }
 
 @Composable
-private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
+private fun HeaderCell(text: String, width: Dp) {
     Box(
         modifier = Modifier
             .width(width)
@@ -630,7 +645,7 @@ private fun HeaderCell(text: String, width: androidx.compose.ui.unit.Dp) {
 @Composable
 private fun DataCell(
     text: String,
-    width: androidx.compose.ui.unit.Dp,
+    width: Dp,
     weight: FontWeight,
     isTotal: Boolean = false
 ) {
@@ -670,8 +685,8 @@ private fun Sessio.toTableRow(): SessionTableRow {
     val leftMade = fets_pos_3 + fets_pos_5 + fets_pos_9 + fets_pos_11
     val leftAttempted = tirs_pos_3 + tirs_pos_5 + tirs_pos_9 + tirs_pos_11
 
-    val rightPct = pctOrNull(rightMade, rightAttempted)
-    val leftPct = pctOrNull(leftMade, leftAttempted)
+    val rightPct = playerPctOrNull(rightMade, rightAttempted)
+    val leftPct = playerPctOrNull(leftMade, leftAttempted)
 
     return SessionTableRow(
         label = "Sessió $num_sessio",
@@ -685,9 +700,9 @@ private fun Sessio.toTableRow(): SessionTableRow {
         totalAttempted = totalAttempted,
         rightPct = rightPct,
         leftPct = leftPct,
-        bestSide = bestSideLabel(rightPct, leftPct),
-        bestZoneT2 = bestZoneT2Label(this),
-        bestZoneT3 = bestZoneT3Label(this)
+        bestSide = playerBestSideLabel(rightPct, leftPct),
+        bestZoneT2 = playerBestZoneT2Label(this),
+        bestZoneT3 = playerBestZoneT3Label(this)
     )
 }
 
@@ -710,7 +725,104 @@ private fun buildTotalRow(sessions: List<Sessio>): SessionTableRow {
     val leftMade = sessions.sumOf { it.fets_pos_3 + it.fets_pos_5 + it.fets_pos_9 + it.fets_pos_11 }
     val leftAttempted = sessions.sumOf { it.tirs_pos_3 + it.tirs_pos_5 + it.tirs_pos_9 + it.tirs_pos_11 }
 
-    val merged = Sessio(
+    val merged = playerAggregateSessions(sessions)
+
+    return SessionTableRow(
+        label = "Total",
+        tlMade = tlMade,
+        tlAttempted = tlAttempted,
+        t2Made = t2Made,
+        t2Attempted = t2Attempted,
+        t3Made = t3Made,
+        t3Attempted = t3Attempted,
+        totalMade = totalMade,
+        totalAttempted = totalAttempted,
+        rightPct = playerPctOrNull(rightMade, rightAttempted),
+        leftPct = playerPctOrNull(leftMade, leftAttempted),
+        bestSide = playerBestSideLabel(
+            playerPctOrNull(rightMade, rightAttempted),
+            playerPctOrNull(leftMade, leftAttempted)
+        ),
+        bestZoneT2 = playerBestZoneT2Label(merged),
+        bestZoneT3 = playerBestZoneT3Label(merged)
+    )
+}
+
+private fun playerBestZoneT2Label(s: Sessio): String {
+    val zones = listOf(
+        PlayerZoneStat("Poste alt dreta", s.fets_pos_4, s.tirs_pos_4),
+        PlayerZoneStat("Poste alt esquerra", s.fets_pos_5, s.tirs_pos_5),
+        PlayerZoneStat("Poste baix dreta", s.fets_pos_7, s.tirs_pos_7),
+        PlayerZoneStat("Ampolla", s.fets_pos_8, s.tirs_pos_8),
+        PlayerZoneStat("Poste baix esquerra", s.fets_pos_9, s.tirs_pos_9)
+    ).filter { it.attempted > 0 }
+
+    if (zones.isEmpty()) return "-"
+
+    return zones.maxWithOrNull(
+        compareBy<PlayerZoneStat> { it.pct() }.thenBy { it.attempted }
+    )?.label ?: "-"
+}
+
+private fun playerBestZoneT3Label(s: Sessio): String {
+    val zones = listOf(
+        PlayerZoneStat("45 dreta", s.fets_pos_1, s.tirs_pos_1),
+        PlayerZoneStat("Mig", s.fets_pos_2, s.tirs_pos_2),
+        PlayerZoneStat("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
+        PlayerZoneStat("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
+        PlayerZoneStat("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
+    ).filter { it.attempted > 0 }
+
+    if (zones.isEmpty()) return "-"
+
+    return zones.maxWithOrNull(
+        compareBy<PlayerZoneStat> { it.pct() }.thenBy { it.attempted }
+    )?.label ?: "-"
+}
+
+private fun playerBestSideLabel(rightPct: Float?, leftPct: Float?): String {
+    return when {
+        rightPct == null && leftPct == null -> "-"
+        rightPct != null && leftPct == null -> "Dreta"
+        rightPct == null && leftPct != null -> "Esquerra"
+        rightPct!! > leftPct!! -> "Dreta"
+        leftPct > rightPct -> "Esquerra"
+        else -> "Igual"
+    }
+}
+
+private fun playerFormatPct(made: Int, attempted: Int): String {
+    val pct = playerPctOrNull(made, attempted) ?: return "-"
+    return "${pct.toInt()}%"
+}
+
+private fun Float?.toPlayerPercentOrDash(): String {
+    return this?.let { "${it.toInt()}%" } ?: "-"
+}
+
+private fun Sessio.threePointPct(): Float? {
+    val made = fets_pos_1 + fets_pos_2 + fets_pos_3 + fets_pos_10 + fets_pos_11
+    val attempted = tirs_pos_1 + tirs_pos_2 + tirs_pos_3 + tirs_pos_10 + tirs_pos_11
+    return playerPctOrNull(made, attempted)
+}
+
+private fun Sessio.freeThrowPct(): Float? {
+    return playerPctOrNull(fets_pos_6, tirs_pos_6)
+}
+
+private fun Sessio.twoPointPct(): Float? {
+    val made = fets_pos_4 + fets_pos_5 + fets_pos_7 + fets_pos_8 + fets_pos_9
+    val attempted = tirs_pos_4 + tirs_pos_5 + tirs_pos_7 + tirs_pos_8 + tirs_pos_9
+    return playerPctOrNull(made, attempted)
+}
+
+private fun playerPctOrNull(made: Int, attempted: Int): Float? {
+    if (attempted <= 0) return null
+    return (made.toFloat() / attempted.toFloat()) * 100f
+}
+
+private fun playerAggregateSessions(sessions: List<Sessio>): Sessio {
+    return Sessio(
         num_sessio = 0,
         id_jugador = sessions.firstOrNull()?.id_jugador ?: "",
         fets_pos_1 = sessions.sumOf { it.fets_pos_1 },
@@ -736,104 +848,6 @@ private fun buildTotalRow(sessions: List<Sessio>): SessionTableRow {
         fets_pos_11 = sessions.sumOf { it.fets_pos_11 },
         tirs_pos_11 = sessions.sumOf { it.tirs_pos_11 }
     )
-
-    return SessionTableRow(
-        label = "Total",
-        tlMade = tlMade,
-        tlAttempted = tlAttempted,
-        t2Made = t2Made,
-        t2Attempted = t2Attempted,
-        t3Made = t3Made,
-        t3Attempted = t3Attempted,
-        totalMade = totalMade,
-        totalAttempted = totalAttempted,
-        rightPct = pctOrNull(rightMade, rightAttempted),
-        leftPct = pctOrNull(leftMade, leftAttempted),
-        bestSide = bestSideLabel(pctOrNull(rightMade, rightAttempted), pctOrNull(leftMade, leftAttempted)),
-        bestZoneT2 = bestZoneT2Label(merged),
-        bestZoneT3 = bestZoneT3Label(merged)
-    )
-}
-
-private fun bestZoneT2Label(s: Sessio): String {
-    val zones = listOf(
-        TripleZone("Poste alt dreta", s.fets_pos_4, s.tirs_pos_4),
-        TripleZone("Poste alt esquerra", s.fets_pos_5, s.tirs_pos_5),
-        TripleZone("Poste baix dreta", s.fets_pos_7, s.tirs_pos_7),
-        TripleZone("Ampolla", s.fets_pos_8, s.tirs_pos_8),
-        TripleZone("Poste baix esquerra", s.fets_pos_9, s.tirs_pos_9)
-    ).filter { it.attempted > 0 }
-
-    if (zones.isEmpty()) return "-"
-
-    return zones.maxWithOrNull(
-        compareBy<TripleZone> { it.pct() }.thenBy { it.attempted }
-    )?.label ?: "-"
-}
-
-private fun bestZoneT3Label(s: Sessio): String {
-    val zones = listOf(
-        TripleZone("45 dreta", s.fets_pos_1, s.tirs_pos_1),
-        TripleZone("Mig", s.fets_pos_2, s.tirs_pos_2),
-        TripleZone("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
-        TripleZone("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
-        TripleZone("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
-    ).filter { it.attempted > 0 }
-
-    if (zones.isEmpty()) return "-"
-
-    return zones.maxWithOrNull(
-        compareBy<TripleZone> { it.pct() }.thenBy { it.attempted }
-    )?.label ?: "-"
-}
-
-private data class TripleZone(
-    val label: String,
-    val made: Int,
-    val attempted: Int
-) {
-    fun pct(): Float = if (attempted <= 0) 0f else made.toFloat() / attempted.toFloat()
-}
-
-private fun bestSideLabel(rightPct: Float?, leftPct: Float?): String {
-    return when {
-        rightPct == null && leftPct == null -> "-"
-        rightPct != null && leftPct == null -> "Dreta"
-        rightPct == null && leftPct != null -> "Esquerra"
-        rightPct!! > leftPct!! -> "Dreta"
-        leftPct > rightPct -> "Esquerra"
-        else -> "Igual"
-    }
-}
-
-private fun formatPct(made: Int, attempted: Int): String {
-    val pct = pctOrNull(made, attempted) ?: return "-"
-    return "${pct.toInt()}%"
-}
-
-private fun Float?.toPrettyPercentOrDash(): String {
-    return this?.let { "${it.toInt()}%" } ?: "-"
-}
-
-private fun Sessio.threePointPct(): Float? {
-    val made = fets_pos_1 + fets_pos_2 + fets_pos_3 + fets_pos_10 + fets_pos_11
-    val attempted = tirs_pos_1 + tirs_pos_2 + tirs_pos_3 + tirs_pos_10 + tirs_pos_11
-    return pctOrNull(made, attempted)
-}
-
-private fun Sessio.freeThrowPct(): Float? {
-    return pctOrNull(fets_pos_6, tirs_pos_6)
-}
-
-private fun Sessio.twoPointPct(): Float? {
-    val made = fets_pos_4 + fets_pos_5 + fets_pos_7 + fets_pos_8 + fets_pos_9
-    val attempted = tirs_pos_4 + tirs_pos_5 + tirs_pos_7 + tirs_pos_8 + tirs_pos_9
-    return pctOrNull(made, attempted)
-}
-
-private fun pctOrNull(made: Int, attempted: Int): Float? {
-    if (attempted <= 0) return null
-    return (made.toFloat() / attempted.toFloat()) * 100f
 }
 
 private fun exportPlayerStatsPdfAndShare(
@@ -841,43 +855,40 @@ private fun exportPlayerStatsPdfAndShare(
     nomJugador: String,
     sessions: List<Sessio>
 ) {
+    val orderedSessions = sessions.sortedBy { it.num_sessio }
+    val tableRows = orderedSessions.map { it.toTableRow() }
+    val totalRow = buildTotalRow(orderedSessions)
+    val globalSession = playerAggregateSessions(orderedSessions)
+
+    val tripleData = orderedSessions.mapIndexed { index, s -> ProgressPoint(index, s.threePointPct()) }
+    val freeThrowData = orderedSessions.mapIndexed { index, s -> ProgressPoint(index, s.freeThrowPct()) }
+    val twoPointData = orderedSessions.mapIndexed { index, s -> ProgressPoint(index, s.twoPointPct()) }
+
     val document = PdfDocument()
-    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-    val page = document.startPage(pageInfo)
-    val canvas = page.canvas
 
-    val titlePaint = Paint().apply {
-        textSize = 20f
-        isFakeBoldText = true
-    }
+    drawPlayerPdfChartPage(
+        document = document,
+        pageNumber = 1,
+        nomJugador = nomJugador,
+        sessionCount = orderedSessions.size,
+        tripleData = tripleData,
+        freeThrowData = freeThrowData,
+        twoPointData = twoPointData
+    )
 
-    val textPaint = Paint().apply {
-        textSize = 12f
-    }
+    val nextPage = drawPlayerPdfTablePages(
+        document = document,
+        startPageNumber = 2,
+        rows = tableRows,
+        totalRow = totalRow
+    )
 
-    var y = 40f
-    canvas.drawText("Estadístiques de $nomJugador", 40f, y, titlePaint)
-    y += 30f
-
-    sessions.sortedBy { it.num_sessio }.forEach { s ->
-        val totalMade =
-            s.fets_pos_1 + s.fets_pos_2 + s.fets_pos_3 + s.fets_pos_4 + s.fets_pos_5 +
-                    s.fets_pos_6 + s.fets_pos_7 + s.fets_pos_8 + s.fets_pos_9 + s.fets_pos_10 + s.fets_pos_11
-        val totalAttempted =
-            s.tirs_pos_1 + s.tirs_pos_2 + s.tirs_pos_3 + s.tirs_pos_4 + s.tirs_pos_5 +
-                    s.tirs_pos_6 + s.tirs_pos_7 + s.tirs_pos_8 + s.tirs_pos_9 + s.tirs_pos_10 + s.tirs_pos_11
-        val pct = if (totalAttempted == 0) 0 else ((totalMade * 100f) / totalAttempted).toInt()
-
-        canvas.drawText(
-            "Sessió ${s.num_sessio}: $totalMade/$totalAttempted  $pct%",
-            40f,
-            y,
-            textPaint
-        )
-        y += 20f
-    }
-
-    document.finishPage(page)
+    drawPlayerPdfShotMapPage(
+        document = document,
+        pageNumber = nextPage,
+        nomJugador = nomJugador,
+        globalSession = globalSession
+    )
 
     val file = File(context.cacheDir, "stats_${nomJugador.replace(" ", "_")}.pdf")
     FileOutputStream(file).use { output ->
@@ -898,4 +909,510 @@ private fun exportPlayerStatsPdfAndShare(
     }
 
     context.startActivity(Intent.createChooser(intent, "Compartir PDF"))
+}
+
+private fun drawPlayerPdfChartPage(
+    document: PdfDocument,
+    pageNumber: Int,
+    nomJugador: String,
+    sessionCount: Int,
+    tripleData: List<ProgressPoint>,
+    freeThrowData: List<ProgressPoint>,
+    twoPointData: List<ProgressPoint>
+) {
+    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, pageNumber).create()
+    val page = document.startPage(pageInfo)
+    val canvas = page.canvas
+
+    val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 22f
+        isFakeBoldText = true
+        color = android.graphics.Color.BLACK
+    }
+    val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 14f
+        color = android.graphics.Color.DKGRAY
+    }
+    val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        strokeWidth = 2f
+        color = android.graphics.Color.BLACK
+    }
+    val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        strokeWidth = 1f
+        color = android.graphics.Color.LTGRAY
+    }
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 12f
+        color = android.graphics.Color.BLACK
+    }
+
+    canvas.drawText("Estadistiques $nomJugador", 32f, 40f, titlePaint)
+    canvas.drawText("Gràfic de sessions", 32f, 64f, subtitlePaint)
+
+    val left = 70f
+    val top = 110f
+    val right = 550f
+    val bottom = 430f
+    val width = right - left
+    val height = bottom - top
+
+    val yTicks = listOf(0, 25, 50, 75, 100)
+    yTicks.forEach { tick ->
+        val y = bottom - (tick / 100f) * height
+        canvas.drawLine(left, y, right, y, gridPaint)
+        canvas.drawText("$tick%", 28f, y + 4f, textPaint)
+    }
+
+    canvas.drawLine(left, top, left, bottom, axisPaint)
+    canvas.drawLine(left, bottom, right, bottom, axisPaint)
+
+    fun xFor(index: Int): Float {
+        if (sessionCount <= 1) return left + width / 2f
+        return left + (index.toFloat() / (sessionCount - 1).toFloat()) * width
+    }
+
+    fun yFor(value: Float): Float {
+        val clamped = value.coerceIn(0f, 100f)
+        return bottom - (clamped / 100f) * height
+    }
+
+    fun drawSeries(points: List<ProgressPoint>, color: Int) {
+        val valid = points.mapNotNull { it.value?.let { v -> it.sessionIndex to v } }
+        if (valid.isEmpty()) return
+
+        val path = AndroidPath()
+        valid.forEachIndexed { index, pair ->
+            val x = xFor(pair.first)
+            val y = yFor(pair.second)
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+
+        val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 4f
+            this.color = color
+        }
+        val pointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            this.color = color
+        }
+
+        canvas.drawPath(path, linePaint)
+        valid.forEach { pair ->
+            canvas.drawCircle(xFor(pair.first), yFor(pair.second), 4f, pointPaint)
+        }
+    }
+
+    drawSeries(tripleData, android.graphics.Color.parseColor("#1565C0"))
+    drawSeries(freeThrowData, android.graphics.Color.parseColor("#D81B60"))
+    drawSeries(twoPointData, android.graphics.Color.parseColor("#EF6C00"))
+
+    val xTicks = when {
+        sessionCount <= 1 -> listOf(1)
+        sessionCount <= 6 -> (1..sessionCount).toList()
+        else -> {
+            val middle = ((sessionCount - 1) / 2) + 1
+            listOf(1, middle, sessionCount).distinct()
+        }
+    }
+
+    xTicks.forEach { tick ->
+        val x = xFor(tick - 1)
+        canvas.drawLine(x, bottom, x, bottom + 8f, axisPaint)
+        canvas.drawText(tick.toString(), x - 4f, bottom + 22f, textPaint)
+    }
+
+    canvas.drawText("Sessions", 255f, 470f, textPaint)
+    canvas.drawText("Triples", 80f, 510f, Paint(textPaint).apply { color = android.graphics.Color.parseColor("#1565C0") })
+    canvas.drawText("Tir lliure", 180f, 510f, Paint(textPaint).apply { color = android.graphics.Color.parseColor("#D81B60") })
+    canvas.drawText("Tirs de 2", 310f, 510f, Paint(textPaint).apply { color = android.graphics.Color.parseColor("#EF6C00") })
+
+    document.finishPage(page)
+}
+
+private fun drawPlayerPdfTablePages(
+    document: PdfDocument,
+    startPageNumber: Int,
+    rows: List<SessionTableRow>,
+    totalRow: SessionTableRow
+): Int {
+    val allRows = rows + totalRow
+    val pageWidth = 1500
+    val pageHeight = 900
+    val marginLeft = 32f
+    val headerY = 70f
+    val rowHeight = 36f
+    val rowsPerPage = 20
+    val columns = listOf(
+        PlayerPdfColumn("Sessió", 85f),
+        PlayerPdfColumn("TL", 85f),
+        PlayerPdfColumn("TL %", 70f),
+        PlayerPdfColumn("T2", 85f),
+        PlayerPdfColumn("T2%", 70f),
+        PlayerPdfColumn("T3", 85f),
+        PlayerPdfColumn("T3%", 70f),
+        PlayerPdfColumn("TOTAL", 95f),
+        PlayerPdfColumn("TOTAL %", 85f),
+        PlayerPdfColumn("Dreta %", 85f),
+        PlayerPdfColumn("Esquerra %", 95f),
+        PlayerPdfColumn("Millor costat", 110f),
+        PlayerPdfColumn("Millor zona T2", 130f),
+        PlayerPdfColumn("Millor zona T3", 130f)
+    )
+
+    var currentPageNumber = startPageNumber
+    allRows.chunked(rowsPerPage).forEach { chunk ->
+        val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, currentPageNumber).create()
+        val page = document.startPage(pageInfo)
+        val canvas = page.canvas
+
+        val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = 20f
+            isFakeBoldText = true
+            color = android.graphics.Color.BLACK
+        }
+
+        canvas.drawText("Taula d'estadístiques", marginLeft, 40f, titlePaint)
+        drawPlayerPdfTableHeader(
+            canvas = canvas,
+            startX = marginLeft,
+            startY = headerY,
+            columns = columns,
+            rowHeight = rowHeight
+        )
+
+        var y = headerY + rowHeight
+        chunk.forEach { row ->
+            drawPlayerPdfStatsRow(
+                canvas = canvas,
+                row = row,
+                columns = columns,
+                startX = marginLeft,
+                startY = y,
+                rowHeight = rowHeight,
+                isTotal = row.label == "Total"
+            )
+            y += rowHeight
+        }
+
+        document.finishPage(page)
+        currentPageNumber++
+    }
+
+    return currentPageNumber
+}
+
+private fun drawPlayerPdfTableHeader(
+    canvas: android.graphics.Canvas,
+    startX: Float,
+    startY: Float,
+    columns: List<PlayerPdfColumn>,
+    rowHeight: Float
+) {
+    val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = android.graphics.Color.parseColor("#F0F0F0")
+    }
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.2f
+        color = android.graphics.Color.parseColor("#8A8A8A")
+    }
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 14f
+        isFakeBoldText = true
+        color = android.graphics.Color.BLACK
+    }
+
+    var x = startX
+    columns.forEach { column ->
+        val rect = RectF(x, startY, x + column.width, startY + rowHeight)
+        canvas.drawRect(rect, backgroundPaint)
+        canvas.drawRect(rect, borderPaint)
+        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
+        canvas.drawText(column.title, x + 6f, textY, textPaint)
+        x += column.width
+    }
+}
+
+private fun drawPlayerPdfStatsRow(
+    canvas: android.graphics.Canvas,
+    row: SessionTableRow,
+    columns: List<PlayerPdfColumn>,
+    startX: Float,
+    startY: Float,
+    rowHeight: Float,
+    isTotal: Boolean
+) {
+    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = if (isTotal) {
+            android.graphics.Color.parseColor("#F0F7FF")
+        } else {
+            android.graphics.Color.WHITE
+        }
+    }
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.2f
+        color = android.graphics.Color.parseColor("#8A8A8A")
+    }
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 14f
+        color = android.graphics.Color.BLACK
+        isFakeBoldText = isTotal
+    }
+
+    val values = listOf(
+        row.label,
+        "${row.tlMade}/${row.tlAttempted}",
+        playerFormatPct(row.tlMade, row.tlAttempted),
+        "${row.t2Made}/${row.t2Attempted}",
+        playerFormatPct(row.t2Made, row.t2Attempted),
+        "${row.t3Made}/${row.t3Attempted}",
+        playerFormatPct(row.t3Made, row.t3Attempted),
+        "${row.totalMade}/${row.totalAttempted}",
+        playerFormatPct(row.totalMade, row.totalAttempted),
+        row.rightPct.toPlayerPercentOrDash(),
+        row.leftPct.toPlayerPercentOrDash(),
+        row.bestSide,
+        row.bestZoneT2,
+        row.bestZoneT3
+    )
+
+    var x = startX
+    values.forEachIndexed { index, value ->
+        val rect = RectF(x, startY, x + columns[index].width, startY + rowHeight)
+        canvas.drawRect(rect, bgPaint)
+        canvas.drawRect(rect, borderPaint)
+        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
+        canvas.drawText(value, x + 6f, textY, textPaint)
+        x += columns[index].width
+    }
+}
+
+private fun drawPlayerPdfShotMapPage(
+    document: PdfDocument,
+    pageNumber: Int,
+    nomJugador: String,
+    globalSession: Sessio
+) {
+    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, pageNumber).create()
+    val page = document.startPage(pageInfo)
+    val canvas = page.canvas
+
+    val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 22f
+        isFakeBoldText = true
+        color = android.graphics.Color.BLACK
+    }
+    val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 14f
+        color = android.graphics.Color.DKGRAY
+    }
+
+    canvas.drawText("Estadistiques $nomJugador", 32f, 40f, titlePaint)
+    canvas.drawText("Mapa de tir global", 32f, 64f, subtitlePaint)
+
+    drawPlayerPdfCourtMap(
+        canvas = canvas,
+        session = globalSession,
+        left = 60f,
+        top = 110f,
+        width = 475f,
+        height = 620f
+    )
+
+    document.finishPage(page)
+}
+
+private fun drawPlayerPdfCourtMap(
+    canvas: android.graphics.Canvas,
+    session: Sessio,
+    left: Float,
+    top: Float,
+    width: Float,
+    height: Float
+) {
+    val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+        color = android.graphics.Color.BLACK
+    }
+
+    fun zonePaint(zone: Int): Paint {
+        val (made, attempted) = playerZoneMadeAttempted(session, zone)
+        val percentage = if (attempted > 0) made.toFloat() / attempted.toFloat() else null
+
+        return Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = when {
+                percentage == null -> android.graphics.Color.WHITE
+                percentage < 0.33f -> android.graphics.Color.parseColor("#E53935")
+                percentage <= 0.66f -> android.graphics.Color.parseColor("#FDD835")
+                else -> android.graphics.Color.parseColor("#43A047")
+            }
+        }
+    }
+
+    val right = left + width
+    val bottom = top + height
+    val third = width / 3f
+    val topSplitY = top + 0.59f * height
+    val lowerSplitY = top + 0.69f * height
+    val paintLeft = left + third
+    val paintRight = left + 2f * third
+
+    val bigCenterX = left + width * 0.5f
+    val bigCenterY = topSplitY + 0.10f * height
+    val threePointRadius = 0.42f * width
+
+    val freeThrowCenterX = left + width * 0.5f
+    val freeThrowCenterY = topSplitY
+    val freeThrowRadius = (paintRight - paintLeft) / 2f
+
+    val leftArcX = bigCenterX - threePointRadius
+    val rightArcX = bigCenterX + threePointRadius
+
+    fun rectZone(l: Float, t: Float, r: Float, b: Float, zone: Int) {
+        canvas.drawRect(l, t, r, b, zonePaint(zone))
+        canvas.drawRect(l, t, r, b, linePaint)
+    }
+
+    rectZone(left, top, left + third, topSplitY, 1)
+    rectZone(left + third, top, left + 2f * third, topSplitY, 2)
+    rectZone(left + 2f * third, top, right, topSplitY, 3)
+    rectZone(left, lowerSplitY, paintLeft, bottom, 10)
+    rectZone(leftArcX, lowerSplitY, paintLeft, bottom, 7)
+    rectZone(paintLeft, topSplitY, paintRight, bottom, 8)
+    rectZone(paintRight, lowerSplitY, rightArcX, bottom, 9)
+    rectZone(rightArcX, lowerSplitY, right, bottom, 11)
+
+    val zone4 = AndroidPath().apply {
+        moveTo(bigCenterX, bigCenterY)
+        lineTo(bigCenterX - threePointRadius, bigCenterY)
+        arcTo(
+            RectF(
+                bigCenterX - threePointRadius,
+                bigCenterY - threePointRadius,
+                bigCenterX + threePointRadius,
+                bigCenterY + threePointRadius
+            ),
+            180f,
+            90f,
+            false
+        )
+        close()
+    }
+    canvas.drawPath(zone4, zonePaint(4))
+    canvas.drawPath(zone4, linePaint)
+
+    val zone5 = AndroidPath().apply {
+        moveTo(bigCenterX, bigCenterY)
+        lineTo(bigCenterX, bigCenterY - threePointRadius)
+        arcTo(
+            RectF(
+                bigCenterX - threePointRadius,
+                bigCenterY - threePointRadius,
+                bigCenterX + threePointRadius,
+                bigCenterY + threePointRadius
+            ),
+            270f,
+            90f,
+            false
+        )
+        close()
+    }
+    canvas.drawPath(zone5, zonePaint(5))
+    canvas.drawPath(zone5, linePaint)
+
+    val zone6 = AndroidPath().apply {
+        arcTo(
+            RectF(
+                freeThrowCenterX - freeThrowRadius,
+                freeThrowCenterY - freeThrowRadius,
+                freeThrowCenterX + freeThrowRadius,
+                freeThrowCenterY + freeThrowRadius
+            ),
+            180f,
+            180f,
+            false
+        )
+        lineTo(freeThrowCenterX + freeThrowRadius, freeThrowCenterY)
+        lineTo(freeThrowCenterX - freeThrowRadius, freeThrowCenterY)
+        close()
+    }
+    canvas.drawPath(zone6, zonePaint(6))
+    canvas.drawPath(zone6, linePaint)
+
+    canvas.drawRect(left, top, right, bottom, linePaint)
+
+    canvas.drawLine(paintLeft, topSplitY, paintLeft, bottom, linePaint)
+    canvas.drawLine(paintRight, topSplitY, paintRight, bottom, linePaint)
+    canvas.drawLine(leftArcX, bigCenterY, leftArcX, bottom, linePaint)
+    canvas.drawLine(rightArcX, bigCenterY, rightArcX, bottom, linePaint)
+    canvas.drawLine(paintLeft, topSplitY, paintRight, topSplitY, linePaint)
+    canvas.drawLine(left, lowerSplitY, paintLeft, lowerSplitY, linePaint)
+    canvas.drawLine(paintRight, lowerSplitY, right, lowerSplitY, linePaint)
+
+    canvas.drawArc(
+        RectF(
+            bigCenterX - threePointRadius,
+            bigCenterY - threePointRadius,
+            bigCenterX + threePointRadius,
+            bigCenterY + threePointRadius
+        ),
+        180f,
+        180f,
+        false,
+        linePaint
+    )
+
+    canvas.drawArc(
+        RectF(
+            freeThrowCenterX - freeThrowRadius,
+            freeThrowCenterY - freeThrowRadius,
+            freeThrowCenterX + freeThrowRadius,
+            freeThrowCenterY + freeThrowRadius
+        ),
+        180f,
+        180f,
+        false,
+        linePaint
+    )
+
+    val hoopY = bottom - 28f
+    val hoopLineWidth = width * 0.12f
+    val hoopRadius = width * 0.018f
+
+    canvas.drawLine(
+        bigCenterX - hoopLineWidth / 2f,
+        hoopY,
+        bigCenterX + hoopLineWidth / 2f,
+        hoopY,
+        linePaint
+    )
+    canvas.drawCircle(
+        bigCenterX,
+        hoopY - hoopRadius * 1.8f,
+        hoopRadius,
+        linePaint
+    )
+}
+
+private fun playerZoneMadeAttempted(session: Sessio, zone: Int): Pair<Int, Int> {
+    return when (zone) {
+        1 -> session.fets_pos_1 to session.tirs_pos_1
+        2 -> session.fets_pos_2 to session.tirs_pos_2
+        3 -> session.fets_pos_3 to session.tirs_pos_3
+        4 -> session.fets_pos_4 to session.tirs_pos_4
+        5 -> session.fets_pos_5 to session.tirs_pos_5
+        6 -> session.fets_pos_6 to session.tirs_pos_6
+        7 -> session.fets_pos_7 to session.tirs_pos_7
+        8 -> session.fets_pos_8 to session.tirs_pos_8
+        9 -> session.fets_pos_9 to session.tirs_pos_9
+        10 -> session.fets_pos_10 to session.tirs_pos_10
+        11 -> session.fets_pos_11 to session.tirs_pos_11
+        else -> 0 to 0
+    }
 }

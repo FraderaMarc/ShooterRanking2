@@ -11,13 +11,15 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,152 +41,205 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marcfradera.shooterranking.data.model.Jugador
 import com.marcfradera.shooterranking.data.model.Sessio
+import com.marcfradera.shooterranking.ui.vm.JugadorsViewModel
 import com.marcfradera.shooterranking.ui.vm.ShotSessionViewModel
 import kotlin.math.sqrt
 
 @Composable
 fun ShotMapScreen(
-    idJugador: String,
-    onBack: () -> Unit
+    idEquip: String,
+    initialJugadorId: String,
+    initialJugadorNom: String,
+    onBack: () -> Unit,
+    onJugadorChanged: (String, String) -> Unit
 ) {
-    val vm: ShotSessionViewModel = viewModel()
+    val sessionsVm: ShotSessionViewModel = viewModel()
+    val playersVm: JugadorsViewModel = viewModel()
+
+    var selectedJugadorId by remember { mutableStateOf(initialJugadorId) }
+    var selectedJugadorNom by remember { mutableStateOf(initialJugadorNom) }
 
     var editingSessionNumber by remember { mutableStateOf<Int?>(null) }
     var zoneDialog by remember { mutableStateOf<Int?>(null) }
     var redrawKey by remember { mutableIntStateOf(0) }
     var sessionsExpanded by remember { mutableStateOf(false) }
+    var playersExpanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(idJugador) {
-        vm.load(idJugador)
-        vm.startNew(idJugador)
+    LaunchedEffect(idEquip) {
+        playersVm.load(idEquip)
+    }
+
+    val players = (playersVm.state.data ?: emptyList()).sortedBy { it.nom_jugador.lowercase() }
+
+    LaunchedEffect(players, initialJugadorId, initialJugadorNom) {
+        if (players.isEmpty()) return@LaunchedEffect
+
+        val initialPlayer = players.firstOrNull { it.id_jugador == initialJugadorId } ?: players.first()
+
+        if (selectedJugadorId.isBlank() || players.none { it.id_jugador == selectedJugadorId }) {
+            selectedJugadorId = initialPlayer.id_jugador
+            selectedJugadorNom = initialPlayer.nom_jugador
+            onJugadorChanged(initialPlayer.id_jugador, initialPlayer.nom_jugador)
+        }
+    }
+
+    LaunchedEffect(selectedJugadorId) {
+        if (selectedJugadorId.isBlank()) return@LaunchedEffect
+        sessionsVm.load(selectedJugadorId)
+        sessionsVm.startNew(selectedJugadorId)
         editingSessionNumber = null
         zoneDialog = null
         sessionsExpanded = false
         redrawKey++
     }
 
-    val savedSessions = vm.sessions.data.orEmpty().sortedByDescending { it.num_sessio }
-    val activeSession = vm.draft
+    val savedSessions = sessionsVm.sessions.data.orEmpty().sortedByDescending { it.num_sessio }
+    val activeSession = sessionsVm.draft
 
     CenteredScaffold(
-        title = "Mapa de tir",
-        onBack = onBack
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(
-                onClick = {
-                    vm.startNew(idJugador)
-                    editingSessionNumber = null
-                    redrawKey++
+        onBack = onBack,
+        titleContent = {
+            ShotMapTitle(
+                currentPlayerName = selectedJugadorNom.ifBlank { "Jugadora" },
+                expanded = playersExpanded,
+                onToggleExpanded = { playersExpanded = !playersExpanded },
+                onDismissPlayers = { playersExpanded = false },
+                players = players,
+                onSelectPlayer = { player ->
+                    selectedJugadorId = player.id_jugador
+                    selectedJugadorNom = player.nom_jugador
+                    playersExpanded = false
+                    onJugadorChanged(player.id_jugador, player.nom_jugador)
                 }
-            ) {
-                Text("Nova sessió")
-            }
-
-            Button(
-                onClick = {
-                    vm.saveCurrentSession(idJugador, editingSessionNumber) {
-                        vm.load(idJugador)
-                        vm.startNew(idJugador)
-                        editingSessionNumber = null
-                        redrawKey++
-                    }
-                },
-                enabled = vm.draft != null
-            ) {
-                Text("Guardar")
-            }
+            )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Button(
-                onClick = { sessionsExpanded = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        when {
+            playersVm.state.loading && players.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(sessionSelectorLabel(editingSessionNumber, vm.draft))
-                    Text("▼")
+                    CircularProgressIndicator()
                 }
             }
 
-            DropdownMenu(
-                expanded = sessionsExpanded,
-                onDismissRequest = { sessionsExpanded = false },
-                modifier = Modifier.fillMaxWidth(0.92f)
-            ) {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = draftSessionLabel(vm.draft),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    },
-                    onClick = {
-                        vm.startNew(idJugador)
-                        editingSessionNumber = null
-                        sessionsExpanded = false
-                        redrawKey++
-                    }
-                )
-
-                if (savedSessions.isEmpty()) {
-                    DropdownMenuItem(
-                        text = { Text("No hi ha sessions guardades") },
-                        onClick = { sessionsExpanded = false },
-                        enabled = false
+            playersVm.state.error != null && players.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = playersVm.state.error ?: "Error carregant jugadores",
+                        color = MaterialTheme.colorScheme.error
                     )
-                } else {
-                    savedSessions.forEach { session ->
+                }
+            }
+
+            players.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Aquest equip encara no té jugadores")
+                }
+            }
+
+            else -> {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { sessionsExpanded = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(sessionSelectorLabel(editingSessionNumber, sessionsVm.draft))
+                            Text("▼")
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = sessionsExpanded,
+                        onDismissRequest = { sessionsExpanded = false },
+                        modifier = Modifier.fillMaxWidth(0.92f)
+                    ) {
                         DropdownMenuItem(
-                            text = { Text(savedSessionLabel(session)) },
+                            text = {
+                                Text(
+                                    text = draftSessionLabel(sessionsVm.draft),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            },
                             onClick = {
-                                editingSessionNumber = session.num_sessio
-                                vm.draft = session.copy()
+                                sessionsVm.startNew(selectedJugadorId)
+                                editingSessionNumber = null
                                 sessionsExpanded = false
                                 redrawKey++
                             }
                         )
+
+                        if (savedSessions.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No hi ha sessions guardades") },
+                                onClick = { sessionsExpanded = false },
+                                enabled = false
+                            )
+                        } else {
+                            savedSessions.forEach { session ->
+                                DropdownMenuItem(
+                                    text = { Text(savedSessionLabel(session)) },
+                                    onClick = {
+                                        editingSessionNumber = session.num_sessio
+                                        sessionsVm.draft = session.copy()
+                                        sessionsExpanded = false
+                                        redrawKey++
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-        key(redrawKey) {
-            CourtMap(
-                session = activeSession,
-                enabled = true,
-                onZoneTap = { zone ->
-                    zoneDialog = zone
+                key(redrawKey) {
+                    CourtMap(
+                        session = activeSession,
+                        enabled = true,
+                        onZoneTap = { zone ->
+                            zoneDialog = zone
+                        }
+                    )
                 }
-            )
-        }
 
-        vm.error?.let { error ->
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error
-            )
+                sessionsVm.error?.let { error ->
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
 
     zoneDialog?.let { zone ->
-        val current = vm.draft
+        val current = sessionsVm.draft
         val (currentMade, currentAttempted) = current.zoneMadeAttempted(zone)
 
         ZoneInputDialog(
@@ -193,17 +248,79 @@ fun ShotMapScreen(
             initialAttempted = currentAttempted,
             onDismiss = { zoneDialog = null },
             onSave = { made, attempted ->
-                vm.setZoneForCurrentSession(
+                sessionsVm.setZoneForCurrentSession(
                     zone = zone,
                     made = made,
                     attempted = attempted,
                     editing = editingSessionNumber,
-                    idJugador = idJugador
+                    idJugador = selectedJugadorId
                 )
-                redrawKey++
+                sessionsVm.saveCurrentSession(
+                    idJugador = selectedJugadorId,
+                    editing = editingSessionNumber
+                ) { savedSessionNumber ->
+                    sessionsVm.load(selectedJugadorId)
+                    editingSessionNumber = savedSessionNumber
+                    sessionsVm.draft = sessionsVm.draft?.copy(num_sessio = savedSessionNumber)
+                    redrawKey++
+                }
                 zoneDialog = null
             }
         )
+    }
+}
+
+@Composable
+private fun ShotMapTitle(
+    currentPlayerName: String,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    onDismissPlayers: () -> Unit,
+    players: List<Jugador>,
+    onSelectPlayer: (Jugador) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Mapa de tir",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Box {
+            TextButton(
+                onClick = onToggleExpanded,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 8.dp,
+                    vertical = 4.dp
+                )
+            ) {
+                Text(
+                    text = currentPlayerName,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = " ▼",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = onDismissPlayers
+            ) {
+                players.forEach { player ->
+                    DropdownMenuItem(
+                        text = { Text(player.nom_jugador) },
+                        onClick = { onSelectPlayer(player) }
+                    )
+                }
+            }
+        }
     }
 }
 

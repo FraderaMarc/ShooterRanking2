@@ -2,6 +2,8 @@ package com.marcfradera.shooterranking.ui.fragments
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -47,6 +49,10 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             if (temporadaLabel.isBlank()) "EQUIPS"
             else "EQUIPS: $temporadaLabel"
 
+        binding.backButton.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
         binding.primaryButton.text = "Afegir equip"
         binding.primaryButton.isEnabled = true
         binding.subtitleText.visibility = View.GONE
@@ -91,7 +97,26 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             hint = "Nom de l'equip"
         }
 
+        val tipusOptions = listOf(
+            "Base — cistella petita",
+            "Formació — Cistella gran",
+            "ACB — mapa de tir professional"
+        )
+
+        val tipusDropdown = AutoCompleteTextView(context).apply {
+            hint = "Tipus de pista"
+            setAdapter(
+                ArrayAdapter(
+                    context,
+                    android.R.layout.simple_dropdown_item_1line,
+                    tipusOptions
+                )
+            )
+            setText(tipusOptions.first(), false)
+        }
+
         container.addView(nomEdit)
+        container.addView(tipusDropdown)
 
         MaterialAlertDialogBuilder(context)
             .setTitle("Afegir equip")

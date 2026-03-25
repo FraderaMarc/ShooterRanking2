@@ -45,6 +45,9 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         )
 
         binding.titleText.text = "TEMPORADES"
+        binding.backButton.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
         binding.primaryButton.text = "Afegir temporada"
         binding.primaryButton.isEnabled = true
         binding.subtitleText.visibility = View.GONE
