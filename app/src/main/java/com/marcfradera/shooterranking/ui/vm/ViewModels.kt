@@ -492,4 +492,19 @@ class ShotSessionViewModel(
 
         onDone(session.num_sessio)
     }
+
+    fun deleteSession(
+        idJugador: String,
+        numSessio: Int,
+        onDone: () -> Unit
+    ) = viewModelScope.launch {
+        error = null
+        try {
+            repo.deleteSession(idJugador, numSessio)
+            draft = null
+            onDone()
+        } catch (e: Exception) {
+            error = e.message
+        }
+    }
 }

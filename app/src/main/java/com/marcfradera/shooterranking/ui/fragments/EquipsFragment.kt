@@ -1,6 +1,8 @@
 package com.marcfradera.shooterranking.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -10,14 +12,17 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.databinding.FragmentRecyclerScreenBinding
 import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.EquipsAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.EquipsLiveDataViewModel
+import kotlinx.coroutines.launch
 
 class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
 
@@ -49,8 +54,13 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             if (temporadaLabel.isBlank()) "EQUIPS"
             else "EQUIPS: $temporadaLabel"
 
+        binding.backButton.visibility = View.VISIBLE
         binding.backButton.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
+
+        binding.settingsButton.setOnClickListener {
+            showSettingsDialog()
         }
 
         binding.primaryButton.text = "Afegir equip"
@@ -77,6 +87,37 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
         }
     }
 
+    private fun showSettingsDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Configuració")
+            .setItems(arrayOf("Tancar sessió")) { _, which ->
+                if (which == 0) {
+                    logoutAndRestart()
+                }
+            }
+            .setNegativeButton("Cancel·lar", null)
+            .show()
+    }
+
+    private fun logoutAndRestart() {
+        lifecycleScope.launch {
+            FirebaseAuth.getInstance().signOut()
+
+            val launchIntent = requireContext().packageManager
+                .getLaunchIntentForPackage(requireContext().packageName)
+
+            launchIntent?.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            )
+
+            if (launchIntent != null) {
+                startActivity(launchIntent)
+            } else {
+                requireActivity().recreate()
+            }
+        }
+    }
+
     private fun showCreateEquipDialog() {
         val temporadaId = shared.selection.value?.temporadaId.orEmpty()
         if (temporadaId.isBlank()) {
@@ -98,13 +139,19 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
         }
 
         val tipusOptions = listOf(
-            "Base — cistella petita",
-            "Formació — Cistella gran",
-            "ACB — mapa de tir professional"
+            "ACB",
+            "Base",
+            "Formació"
         )
 
         val tipusDropdown = AutoCompleteTextView(context).apply {
             hint = "Tipus de pista"
+            inputType = InputType.TYPE_NULL
+            keyListener = null
+            isCursorVisible = false
+            isFocusable = true
+            isFocusableInTouchMode = true
+
             setAdapter(
                 ArrayAdapter(
                     context,
@@ -112,7 +159,13 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                     tipusOptions
                 )
             )
+
             setText(tipusOptions.first(), false)
+
+            setOnClickListener { showDropDown() }
+            setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) showDropDown()
+            }
         }
 
         container.addView(nomEdit)
@@ -128,9 +181,15 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                 dialog.setOnShowListener {
                     dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                         val nom = nomEdit.text.toString().trim()
+                        val tipus = tipusDropdown.text.toString().trim()
 
                         if (nom.isBlank()) {
                             nomEdit.error = "Introdueix un nom"
+                            return@setOnClickListener
+                        }
+
+                        if (tipus.isBlank()) {
+                            tipusDropdown.error = "Selecciona un tipus"
                             return@setOnClickListener
                         }
 

@@ -671,6 +671,23 @@ class ShooterRepository(
         val doc = query.documents.first()
         doc.reference.set(session).await()
     }
+
+    suspend fun deleteSession(idJugador: String, numSessio: Int) {
+        val uid = currentUid()
+
+        val query = db.collection("sessions")
+            .whereEqualTo("userId", uid)
+            .whereEqualTo("id_jugador", idJugador)
+            .whereEqualTo("num_sessio", numSessio)
+            .get()
+            .await()
+
+        val doc = query.documents.firstOrNull()
+            ?: throw IllegalStateException("No s'ha trobat la sessió a eliminar.")
+
+        doc.reference.delete().await()
+    }
+
     suspend fun getJugadorDeleteSessionsCount(idJugador: String): Int {
         return listSessions(idJugador).size
     }

@@ -1,5 +1,6 @@
 package com.marcfradera.shooterranking.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -9,14 +10,17 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.databinding.FragmentRecyclerScreenBinding
 import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.TemporadesAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.TemporadesLiveDataViewModel
+import kotlinx.coroutines.launch
 
 class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
 
@@ -45,9 +49,12 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         )
 
         binding.titleText.text = "TEMPORADES"
-        binding.backButton.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+        binding.backButton.visibility = View.GONE
+
+        binding.settingsButton.setOnClickListener {
+            showSettingsDialog()
         }
+
         binding.primaryButton.text = "Afegir temporada"
         binding.primaryButton.isEnabled = true
         binding.subtitleText.visibility = View.GONE
@@ -67,6 +74,37 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         }
 
         vm.load()
+    }
+
+    private fun showSettingsDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Configuració")
+            .setItems(arrayOf("Tancar sessió")) { _, which ->
+                if (which == 0) {
+                    logoutAndRestart()
+                }
+            }
+            .setNegativeButton("Cancel·lar", null)
+            .show()
+    }
+
+    private fun logoutAndRestart() {
+        lifecycleScope.launch {
+            FirebaseAuth.getInstance().signOut()
+
+            val launchIntent = requireContext().packageManager
+                .getLaunchIntentForPackage(requireContext().packageName)
+
+            launchIntent?.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            )
+
+            if (launchIntent != null) {
+                startActivity(launchIntent)
+            } else {
+                requireActivity().recreate()
+            }
+        }
     }
 
     private fun showCreateTemporadaDialog() {

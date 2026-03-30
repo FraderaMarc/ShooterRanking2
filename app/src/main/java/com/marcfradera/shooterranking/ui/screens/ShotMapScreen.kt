@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -70,6 +71,7 @@ fun ShotMapScreen(
     var redrawKey by remember { mutableIntStateOf(0) }
     var sessionsExpanded by remember { mutableStateOf(false) }
     var playersExpanded by remember { mutableStateOf(false) }
+    var showDeleteSessionDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(idEquip) {
         playersVm.load(idEquip)
@@ -96,6 +98,7 @@ fun ShotMapScreen(
         editingSessionNumber = null
         zoneDialog = null
         sessionsExpanded = false
+        showDeleteSessionDialog = false
         redrawKey++
     }
 
@@ -161,7 +164,9 @@ fun ShotMapScreen(
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = { sessionsExpanded = true },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -176,7 +181,7 @@ fun ShotMapScreen(
                     DropdownMenu(
                         expanded = sessionsExpanded,
                         onDismissRequest = { sessionsExpanded = false },
-                        modifier = Modifier.fillMaxWidth(0.92f)
+                        modifier = Modifier.widthIn(min = 260.dp)
                     ) {
                         DropdownMenuItem(
                             text = {
@@ -212,6 +217,17 @@ fun ShotMapScreen(
                                 )
                             }
                         }
+                    }
+                }
+
+                if (editingSessionNumber != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = { showDeleteSessionDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Eliminar sessió")
                     }
                 }
 
@@ -268,6 +284,38 @@ fun ShotMapScreen(
             }
         )
     }
+
+    if (showDeleteSessionDialog && editingSessionNumber != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteSessionDialog = false },
+            title = { Text("Eliminar sessió") },
+            text = { Text("Vols eliminar la sessió $editingSessionNumber? Aquesta acció no es pot desfer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val sessionToDelete = editingSessionNumber ?: return@TextButton
+                        sessionsVm.deleteSession(
+                            idJugador = selectedJugadorId,
+                            numSessio = sessionToDelete
+                        ) {
+                            showDeleteSessionDialog = false
+                            editingSessionNumber = null
+                            sessionsVm.load(selectedJugadorId)
+                            sessionsVm.startNew(selectedJugadorId)
+                            redrawKey++
+                        }
+                    }
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteSessionDialog = false }) {
+                    Text("Cancel·lar")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -290,20 +338,20 @@ private fun ShotMapTitle(
         )
 
         Box {
-            TextButton(
+            OutlinedButton(
                 onClick = onToggleExpanded,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 8.dp,
-                    vertical = 4.dp
-                )
+                modifier = Modifier
+                    .widthIn(min = 190.dp)
+                    .height(42.dp)
             ) {
                 Text(
                     text = currentPlayerName,
                     color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = " ▼",
+                    text = "▼",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleSmall
                 )
@@ -311,7 +359,8 @@ private fun ShotMapTitle(
 
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = onDismissPlayers
+                onDismissRequest = onDismissPlayers,
+                modifier = Modifier.widthIn(min = 240.dp)
             ) {
                 players.forEach { player ->
                     DropdownMenuItem(

@@ -34,6 +34,18 @@
             android:textColor="@color/sr_text"
             android:textSize="22sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/settingsButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="⚙"
+            android:textColor="@color/sr_text"
+            android:textSize="22sp" />
     </LinearLayout>
 
     <Button
