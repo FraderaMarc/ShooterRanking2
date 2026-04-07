@@ -557,6 +557,8 @@ private fun LegendItem(
     }
 }
 
+private val SessionStickyColumnWidth = 90.dp
+
 @Composable
 private fun SessionStatsTable(
     rows: List<SessionTableRow>,
@@ -568,27 +570,68 @@ private fun SessionStatsTable(
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .horizontalScroll(scroll)
                 .padding(12.dp)
                 .border(1.dp, borderColor)
         ) {
+            // Columna fija
             Column {
-                SessionTableHeader()
+                HeaderCell("Sessió", SessionStickyColumnWidth)
+
                 rows.forEach { row ->
-                    SessionTableDataRow(row = row, isTotal = false)
+                    SessionTableStickyCell(
+                        text = row.label,
+                        isTotal = false
+                    )
                 }
-                SessionTableDataRow(row = totalRow, isTotal = true)
+
+                SessionTableStickyCell(
+                    text = totalRow.label,
+                    isTotal = true
+                )
+            }
+
+            // Resto de columnas con scroll horizontal
+            Box(
+                modifier = Modifier.horizontalScroll(scroll)
+            ) {
+                Column {
+                    SessionTableScrollableHeader()
+
+                    rows.forEach { row ->
+                        SessionTableScrollableDataRow(
+                            row = row,
+                            isTotal = false
+                        )
+                    }
+
+                    SessionTableScrollableDataRow(
+                        row = totalRow,
+                        isTotal = true
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SessionTableHeader() {
+private fun SessionTableStickyCell(
+    text: String,
+    isTotal: Boolean
+) {
+    DataCell(
+        text = text,
+        width = SessionStickyColumnWidth,
+        weight = if (isTotal) FontWeight.Bold else FontWeight.Normal,
+        isTotal = isTotal
+    )
+}
+
+@Composable
+private fun SessionTableScrollableHeader() {
     Row {
-        HeaderCell("Sessió", 90.dp)
         HeaderCell("TL", 90.dp)
         HeaderCell("TL %", 80.dp)
         HeaderCell("T2", 90.dp)
@@ -606,14 +649,13 @@ private fun SessionTableHeader() {
 }
 
 @Composable
-private fun SessionTableDataRow(
+private fun SessionTableScrollableDataRow(
     row: SessionTableRow,
     isTotal: Boolean
 ) {
     val weight = if (isTotal) FontWeight.Bold else FontWeight.Normal
 
     Row {
-        DataCell(row.label, 90.dp, weight, isTotal)
         DataCell("${row.tlMade}/${row.tlAttempted}", 90.dp, weight, isTotal)
         DataCell(playerFormatPct(row.tlMade, row.tlAttempted), 80.dp, weight, isTotal)
         DataCell("${row.t2Made}/${row.t2Attempted}", 90.dp, weight, isTotal)

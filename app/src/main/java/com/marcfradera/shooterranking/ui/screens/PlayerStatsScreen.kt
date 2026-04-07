@@ -838,7 +838,7 @@ private fun buildTeamTotalRow(
         bestSide = rankingBestSideLabel(rightPct, leftPct),
         bestZoneT2 = rankingBestZoneT2Label(merged),
         bestZoneT3 = rankingBestZoneT3Label(merged),
-        label = "TOTAL EQUIPO",
+        label = "TOTAL EQUIP",
         isTotalRow = true
     )
 }

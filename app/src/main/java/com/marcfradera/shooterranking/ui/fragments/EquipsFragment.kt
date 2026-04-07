@@ -2,10 +2,7 @@ package com.marcfradera.shooterranking.ui.fragments
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.InputType
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -138,38 +135,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             hint = "Nom de l'equip"
         }
 
-        val tipusOptions = listOf(
-            "ACB",
-            "Base",
-            "Formació"
-        )
-
-        val tipusDropdown = AutoCompleteTextView(context).apply {
-            hint = "Tipus de pista"
-            inputType = InputType.TYPE_NULL
-            keyListener = null
-            isCursorVisible = false
-            isFocusable = true
-            isFocusableInTouchMode = true
-
-            setAdapter(
-                ArrayAdapter(
-                    context,
-                    android.R.layout.simple_dropdown_item_1line,
-                    tipusOptions
-                )
-            )
-
-            setText(tipusOptions.first(), false)
-
-            setOnClickListener { showDropDown() }
-            setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) showDropDown()
-            }
-        }
-
         container.addView(nomEdit)
-        container.addView(tipusDropdown)
 
         MaterialAlertDialogBuilder(context)
             .setTitle("Afegir equip")
@@ -181,15 +147,9 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                 dialog.setOnShowListener {
                     dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                         val nom = nomEdit.text.toString().trim()
-                        val tipus = tipusDropdown.text.toString().trim()
 
                         if (nom.isBlank()) {
                             nomEdit.error = "Introdueix un nom"
-                            return@setOnClickListener
-                        }
-
-                        if (tipus.isBlank()) {
-                            tipusDropdown.error = "Selecciona un tipus"
                             return@setOnClickListener
                         }
 

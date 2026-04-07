@@ -104,6 +104,7 @@ fun ShotMapScreen(
 
     val savedSessions = sessionsVm.sessions.data.orEmpty().sortedByDescending { it.num_sessio }
     val activeSession = sessionsVm.draft
+    val newSessionDisplayNumber = savedSessions.size + 1
 
     CenteredScaffold(
         onBack = onBack,
@@ -173,7 +174,12 @@ fun ShotMapScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(sessionSelectorLabel(editingSessionNumber, sessionsVm.draft))
+                            Text(
+                                sessionSelectorLabel(
+                                    editingSessionNumber = editingSessionNumber,
+                                    newSessionDisplayNumber = newSessionDisplayNumber
+                                )
+                            )
                             Text("▼")
                         }
                     }
@@ -186,7 +192,7 @@ fun ShotMapScreen(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = draftSessionLabel(sessionsVm.draft),
+                                    text = draftSessionLabel(newSessionDisplayNumber),
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             },
@@ -375,17 +381,17 @@ private fun ShotMapTitle(
 
 private fun sessionSelectorLabel(
     editingSessionNumber: Int?,
-    draft: Sessio?
+    newSessionDisplayNumber: Int
 ): String {
     return if (editingSessionNumber != null) {
         "Sessió $editingSessionNumber"
     } else {
-        draftSessionLabel(draft)
+        draftSessionLabel(newSessionDisplayNumber)
     }
 }
 
-private fun draftSessionLabel(draft: Sessio?): String {
-    return draft?.let { "Nova sessió (${it.num_sessio})" } ?: "Nova sessió"
+private fun draftSessionLabel(newSessionDisplayNumber: Int): String {
+    return "Nova sessió ($newSessionDisplayNumber)"
 }
 
 private fun savedSessionLabel(session: Sessio): String {
