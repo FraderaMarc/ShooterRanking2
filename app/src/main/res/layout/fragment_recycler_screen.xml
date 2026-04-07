@@ -4,14 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/sr_background"
-    android:padding="16dp">
+    android:background="@color/sr_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:background="@color/sr_surface"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp">
 
         <TextView
             android:id="@+id/backButton"
@@ -49,34 +53,42 @@
             android:textSize="22sp" />
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/primaryButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="52dp"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white"
-        app:backgroundTint="@color/sr_primary"
-        app:cornerRadius="14dp"
-        app:rippleColor="@color/sr_primary_dark" />
-
-    <TextView
-        android:id="@+id/subtitleText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/sr_text_secondary"
-        android:textSize="14sp"
-        android:paddingTop="12dp"
-        android:paddingBottom="8dp"
-        android:visibility="gone" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp" />
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/primaryButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            app:backgroundTint="@color/sr_primary"
+            app:cornerRadius="14dp"
+            app:rippleColor="@color/sr_primary_dark" />
+
+        <TextView
+            android:id="@+id/subtitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/sr_text_secondary"
+            android:textSize="14sp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp" />
+    </LinearLayout>
 
 </LinearLayout>

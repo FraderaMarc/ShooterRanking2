@@ -55,6 +55,9 @@ import com.marcfradera.shooterranking.data.model.Sessio
 import com.marcfradera.shooterranking.ui.vm.ShotSessionViewModel
 import java.io.File
 import java.io.FileOutputStream
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.CardDefaults
+
 
 private enum class StatsFilter(val label: String) {
     ALL("Totes"),
@@ -222,9 +225,12 @@ fun PlayerStatsScreen(
                     Spacer(Modifier.height(16.dp))
 
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(430.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF3A3A42)
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Box(
                             modifier = Modifier

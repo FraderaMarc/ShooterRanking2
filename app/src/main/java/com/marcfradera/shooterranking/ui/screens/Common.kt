@@ -22,6 +22,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.marcfradera.shooterranking.ui.vm.AuthViewModel
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBarDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,8 +47,15 @@ fun CenteredScaffold(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                ),
                 title = {
                     if (titleContent != null) {
                         titleContent()
@@ -86,6 +96,7 @@ fun CenteredScaffold(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(16.dp),
             content = content

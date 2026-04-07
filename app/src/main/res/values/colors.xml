@@ -7,6 +7,7 @@
     <color name="sr_text">#EDEFF6</color>
     <color name="sr_text_secondary">#C9CDE0</color>
     <color name="sr_error">#FF4D4D</color>
+    <color name="sr_card_neutral">#3B3943</color>
 
     <color name="purple_500">#3BB54A</color>
     <color name="purple_700">#2C8F39</color>
