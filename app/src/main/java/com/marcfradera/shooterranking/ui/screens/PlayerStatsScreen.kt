@@ -62,9 +62,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CardDefaults
 
 private enum class RankingFilter(val label: String) {
     TOTAL("Tirs totals"),
@@ -375,13 +372,7 @@ private fun PlayerRow(
             .combinedClickable(
                 onClick = {},
                 onLongClick = { expanded = true }
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            )
     ) {
         Row(
             modifier = Modifier
