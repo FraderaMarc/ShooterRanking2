@@ -44,6 +44,21 @@ class TemporadesLiveDataViewModel(
                 onError(e.message ?: "No s'ha pogut crear la temporada.")
             }
         }
+    fun update(
+        idTemporada: String,
+        anyInici: Int,
+        anyFi: Int,
+        onDone: () -> Unit,
+        onError: (String) -> Unit
+    ) = viewModelScope.launch {
+        try {
+            repo.updateTemporada(idTemporada, anyInici, anyFi)
+            load()
+            onDone()
+        } catch (e: Exception) {
+            onError(e.message ?: "No s'ha pogut actualitzar la temporada.")
+        }
+    }
 
     fun loadDeletePreview(
         idTemporada: String,
@@ -100,6 +115,21 @@ class EquipsLiveDataViewModel(
             onDone()
         } catch (e: Exception) {
             onError(e.message ?: "No s'ha pogut crear l'equip.")
+        }
+    }
+    fun update(
+        idEquip: String,
+        temporadaId: String,
+        nomEquip: String,
+        onDone: () -> Unit,
+        onError: (String) -> Unit
+    ) = viewModelScope.launch {
+        try {
+            repo.updateEquip(idEquip, nomEquip.trim())
+            load(temporadaId)
+            onDone()
+        } catch (e: Exception) {
+            onError(e.message ?: "No s'ha pogut actualitzar l'equip.")
         }
     }
 

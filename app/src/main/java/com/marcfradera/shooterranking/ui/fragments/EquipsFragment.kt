@@ -20,6 +20,8 @@ import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.EquipsAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.EquipsLiveDataViewModel
 import kotlinx.coroutines.launch
+import android.widget.ProgressBar
+import android.widget.TextView
 
 class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
 
@@ -38,7 +40,13 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                 shared.setEquip(it.equip.id_equip, it.equip.nom_equip)
                 findNavController().navigate(R.id.action_equips_to_ranking)
             },
-            onLongClick = {
+            onEdit = {
+                showEditEquipDialog(
+                    idEquip = it.equip.id_equip,
+                    initialNomEquip = it.equip.nom_equip
+                )
+            },
+            onDelete = {
                 showDeleteEquipDialog(
                     idEquip = it.equip.id_equip,
                     nomEquip = it.equip.nom_equip
@@ -154,6 +162,85 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                         }
 
                         vm.create(
+                            temporadaId = temporadaId,
+                            nomEquip = nom,
+                            onDone = { dialog.dismiss() },
+                            onError = {
+                                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                }
+                dialog.show()
+            }
+    }
+    private fun showEquipOptionsDialog(
+        idEquip: String,
+        nomEquip: String
+    ) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(nomEquip)
+            .setItems(arrayOf("Editar", "Eliminar")) { _, which ->
+                when (which) {
+                    0 -> showEditEquipDialog(
+                        idEquip = idEquip,
+                        initialNomEquip = nomEquip
+                    )
+                    1 -> showDeleteEquipDialog(
+                        idEquip = idEquip,
+                        nomEquip = nomEquip
+                    )
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun showEditEquipDialog(
+        idEquip: String,
+        initialNomEquip: String
+    ) {
+        val temporadaId = shared.selection.value?.temporadaId.orEmpty()
+        if (temporadaId.isBlank()) {
+            Toast.makeText(requireContext(), "No hi ha temporada seleccionada", Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
+
+        val context = requireContext()
+
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 8, pad, 0)
+        }
+
+        val nomEdit = EditText(context).apply {
+            hint = "Nom de l'equip"
+            setText(initialNomEquip)
+            setSelection(text.length)
+        }
+
+        container.addView(nomEdit)
+
+        MaterialAlertDialogBuilder(context)
+            .setTitle("Editar equip")
+            .setView(container)
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Guardar", null)
+            .create()
+            .also { dialog ->
+                dialog.setOnShowListener {
+                    dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val nom = nomEdit.text.toString().trim()
+
+                        if (nom.isBlank()) {
+                            nomEdit.error = "Introdueix un nom"
+                            return@setOnClickListener
+                        }
+
+                        vm.update(
+                            idEquip = idEquip,
                             temporadaId = temporadaId,
                             nomEquip = nom,
                             onDone = { dialog.dismiss() },

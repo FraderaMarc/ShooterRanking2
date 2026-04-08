@@ -21,6 +21,8 @@ import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.TemporadesAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.TemporadesLiveDataViewModel
 import kotlinx.coroutines.launch
+import android.widget.ProgressBar
+import android.widget.TextView
 
 class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
 
@@ -40,7 +42,14 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
                 shared.setTemporada(it.temporada.id_temporada, label)
                 findNavController().navigate(R.id.action_temporades_to_equips)
             },
-            onLongClick = {
+            onEdit = {
+                showEditTemporadaDialog(
+                    idTemporada = it.temporada.id_temporada,
+                    initialAnyInici = it.temporada.any_inici,
+                    initialAnyFi = it.temporada.any_fi
+                )
+            },
+            onDelete = {
                 showDeleteTemporadaDialog(
                     idTemporada = it.temporada.id_temporada,
                     title = "${it.temporada.any_inici}-${it.temporada.any_fi}"
@@ -162,27 +171,150 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
                 dialog.show()
             }
     }
+    private fun showTemporadaOptionsDialog(
+        idTemporada: String,
+        title: String,
+        anyInici: Int,
+        anyFi: Int
+    ) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(title)
+            .setItems(arrayOf("Editar", "Eliminar")) { _, which ->
+                when (which) {
+                    0 -> showEditTemporadaDialog(
+                        idTemporada = idTemporada,
+                        initialAnyInici = anyInici,
+                        initialAnyFi = anyFi
+                    )
+                    1 -> showDeleteTemporadaDialog(
+                        idTemporada = idTemporada,
+                        title = title
+                    )
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+    private fun showEditTemporadaDialog(
+        idTemporada: String,
+        initialAnyInici: Int,
+        initialAnyFi: Int
+    ) {
+        val context = requireContext()
+
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 8, pad, 0)
+        }
+
+        val anyIniciEdit = EditText(context).apply {
+            hint = "Any inici"
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(initialAnyInici.toString())
+            setSelection(text.length)
+        }
+
+        val anyFiEdit = EditText(context).apply {
+            hint = "Any fi"
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(initialAnyFi.toString())
+            setSelection(text.length)
+        }
+
+        container.addView(anyIniciEdit)
+        container.addView(anyFiEdit)
+
+        MaterialAlertDialogBuilder(context)
+            .setTitle("Editar temporada")
+            .setView(container)
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Guardar", null)
+            .create()
+            .also { dialog ->
+                dialog.setOnShowListener {
+                    dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val anyInici = anyIniciEdit.text.toString().trim().toIntOrNull()
+                        val anyFi = anyFiEdit.text.toString().trim().toIntOrNull()
+
+                        when {
+                            anyInici == null -> anyIniciEdit.error = "Any invàlid"
+                            anyFi == null -> anyFiEdit.error = "Any invàlid"
+                            anyFi < anyInici -> anyFiEdit.error = "L'any final no pot ser menor"
+                            else -> {
+                                vm.update(
+                                    idTemporada = idTemporada,
+                                    anyInici = anyInici,
+                                    anyFi = anyFi,
+                                    onDone = { dialog.dismiss() },
+                                    onError = {
+                                        Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                dialog.show()
+            }
+    }
 
     private fun showDeleteTemporadaDialog(idTemporada: String, title: String) {
-        vm.loadDeletePreview(
-            idTemporada = idTemporada,
-            onDone = { preview ->
-                val message = buildString {
-                    append("Vols eliminar la temporada \"$title\"?\n\n")
-                    append("Equips: ${preview.equips.size}\n")
-                    append("Jugadores: ${preview.jugadorsCount}\n")
-                    append("Sessions totals: ${preview.sessionsCount}\n\n")
-                    append("Aquesta acció no es pot desfer.")
-                }
+        val context = requireContext()
 
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Confirmar eliminació")
-                    .setMessage(message)
-                    .setNegativeButton("Cancelar", null)
-                    .setPositiveButton("Eliminar") { _, _ ->
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 8, pad, 0)
+        }
+
+        val messageView = TextView(context).apply {
+            text = "Carregant dades..."
+            val bottomPad = (12 * resources.displayMetrics.density).toInt()
+            setPadding(0, 0, 0, bottomPad)
+        }
+
+        val progressBar = ProgressBar(context).apply {
+            isIndeterminate = true
+        }
+
+        container.addView(messageView)
+        container.addView(progressBar)
+
+        val dialog = MaterialAlertDialogBuilder(context)
+            .setTitle("Confirmar eliminació")
+            .setView(container)
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Eliminar", null)
+            .create()
+
+        dialog.setOnShowListener {
+            val deleteButton = dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+            deleteButton.isEnabled = false
+
+            vm.loadDeletePreview(
+                idTemporada = idTemporada,
+                onDone = { preview ->
+                    if (!dialog.isShowing) return@loadDeletePreview
+
+                    messageView.text = buildString {
+                        append("Vols eliminar la temporada \"$title\"?\n\n")
+                        append("Equips: ${preview.equips.size}\n")
+                        append("Jugadores: ${preview.jugadorsCount}\n")
+                        append("Sessions totals: ${preview.sessionsCount}\n\n")
+                        append("Aquesta acció no es pot desfer.")
+                    }
+
+                    progressBar.visibility = View.GONE
+                    deleteButton.isEnabled = true
+
+                    deleteButton.setOnClickListener {
+                        deleteButton.isEnabled = false
+
                         vm.delete(
                             idTemporada = idTemporada,
                             onDone = {
+                                dialog.dismiss()
                                 Toast.makeText(
                                     requireContext(),
                                     "Temporada eliminada",
@@ -190,16 +322,23 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
                                 ).show()
                             },
                             onError = {
+                                deleteButton.isEnabled = true
                                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
                             }
                         )
                     }
-                    .show()
-            },
-            onError = {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-            }
-        )
+                },
+                onError = {
+                    if (!dialog.isShowing) return@loadDeletePreview
+
+                    messageView.text = it
+                    progressBar.visibility = View.GONE
+                    deleteButton.isEnabled = false
+                }
+            )
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {
