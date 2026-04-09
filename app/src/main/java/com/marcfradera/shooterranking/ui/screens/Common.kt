@@ -1,6 +1,7 @@
 package com.marcfradera.shooterranking.ui.screens
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,9 +10,11 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,9 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.marcfradera.shooterranking.ui.vm.AuthViewModel
-import androidx.compose.foundation.background
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBarDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +32,7 @@ fun CenteredScaffold(
     title: String? = null,
     onBack: (() -> Unit)? = null,
     titleContent: (@Composable () -> Unit)? = null,
+    showSettings: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -71,23 +72,25 @@ fun CenteredScaffold(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { settingsExpanded = true }) {
-                        Text("⚙")
-                    }
+                    if (showSettings) {
+                        IconButton(onClick = { settingsExpanded = true }) {
+                            Text("⚙")
+                        }
 
-                    DropdownMenu(
-                        expanded = settingsExpanded,
-                        onDismissRequest = { settingsExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Tancar sessió") },
-                            onClick = {
-                                settingsExpanded = false
-                                authVm.signOut {
-                                    restartApp()
+                        DropdownMenu(
+                            expanded = settingsExpanded,
+                            onDismissRequest = { settingsExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Tancar sessió") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    authVm.signOut {
+                                        restartApp()
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             )
