@@ -262,6 +262,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             onDone = { preview ->
                 val message = buildString {
                     append("Vols eliminar l'equip \"$nomEquip\"?\n\n")
+                    append("S'eliminara el seguent: \n")
                     append("Jugadores: ${preview.jugadors.size}\n")
                     append("Sessions totals: ${preview.sessionsCount}\n\n")
                     append("Aquesta acció no es pot desfer.")

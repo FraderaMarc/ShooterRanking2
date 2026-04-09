@@ -299,6 +299,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
 
                     messageView.text = buildString {
                         append("Vols eliminar la temporada \"$title\"?\n\n")
+                        append("S'eliminara el seguent: \n")
                         append("Equips: ${preview.equips.size}\n")
                         append("Jugadores: ${preview.jugadorsCount}\n")
                         append("Sessions totals: ${preview.sessionsCount}\n\n")
