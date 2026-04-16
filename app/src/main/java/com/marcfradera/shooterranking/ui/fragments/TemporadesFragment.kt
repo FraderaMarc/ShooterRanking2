@@ -6,11 +6,12 @@ import android.text.InputType
 import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -20,9 +21,6 @@ import com.marcfradera.shooterranking.databinding.FragmentRecyclerScreenBinding
 import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.TemporadesAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.TemporadesLiveDataViewModel
-import kotlinx.coroutines.launch
-import android.widget.ProgressBar
-import android.widget.TextView
 
 class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
 
@@ -98,21 +96,19 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
     }
 
     private fun logoutAndRestart() {
-        lifecycleScope.launch {
-            FirebaseAuth.getInstance().signOut()
+        FirebaseAuth.getInstance().signOut()
 
-            val launchIntent = requireContext().packageManager
-                .getLaunchIntentForPackage(requireContext().packageName)
+        val launchIntent = requireContext().packageManager
+            .getLaunchIntentForPackage(requireContext().packageName)
 
-            launchIntent?.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            )
+        launchIntent?.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        )
 
-            if (launchIntent != null) {
-                startActivity(launchIntent)
-            } else {
-                requireActivity().recreate()
-            }
+        if (launchIntent != null) {
+            startActivity(launchIntent)
+        } else {
+            requireActivity().recreate()
         }
     }
 
@@ -141,7 +137,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         MaterialAlertDialogBuilder(context)
             .setTitle("Afegir temporada")
             .setView(container)
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancel·lar", null)
             .setPositiveButton("Guardar", null)
             .create()
             .also { dialog ->
@@ -171,30 +167,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
                 dialog.show()
             }
     }
-    private fun showTemporadaOptionsDialog(
-        idTemporada: String,
-        title: String,
-        anyInici: Int,
-        anyFi: Int
-    ) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(title)
-            .setItems(arrayOf("Editar", "Eliminar")) { _, which ->
-                when (which) {
-                    0 -> showEditTemporadaDialog(
-                        idTemporada = idTemporada,
-                        initialAnyInici = anyInici,
-                        initialAnyFi = anyFi
-                    )
-                    1 -> showDeleteTemporadaDialog(
-                        idTemporada = idTemporada,
-                        title = title
-                    )
-                }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
+
     private fun showEditTemporadaDialog(
         idTemporada: String,
         initialAnyInici: Int,
@@ -228,7 +201,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         MaterialAlertDialogBuilder(context)
             .setTitle("Editar temporada")
             .setView(container)
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancel·lar", null)
             .setPositiveButton("Guardar", null)
             .create()
             .also { dialog ->
@@ -284,7 +257,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         val dialog = MaterialAlertDialogBuilder(context)
             .setTitle("Confirmar eliminació")
             .setView(container)
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancel·lar", null)
             .setPositiveButton("Eliminar", null)
             .create()
 
@@ -299,7 +272,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
 
                     messageView.text = buildString {
                         append("Vols eliminar la temporada \"$title\"?\n\n")
-                        append("S'eliminara el seguent: \n")
+                        append("S'eliminarà el següent:\n")
                         append("Equips: ${preview.equips.size}\n")
                         append("Jugadores: ${preview.jugadorsCount}\n")
                         append("Sessions totals: ${preview.sessionsCount}\n\n")

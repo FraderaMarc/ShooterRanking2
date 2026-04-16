@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -19,9 +18,6 @@ import com.marcfradera.shooterranking.databinding.FragmentRecyclerScreenBinding
 import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.EquipsAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.EquipsLiveDataViewModel
-import kotlinx.coroutines.launch
-import android.widget.ProgressBar
-import android.widget.TextView
 
 class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
 
@@ -105,21 +101,19 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
     }
 
     private fun logoutAndRestart() {
-        lifecycleScope.launch {
-            FirebaseAuth.getInstance().signOut()
+        FirebaseAuth.getInstance().signOut()
 
-            val launchIntent = requireContext().packageManager
-                .getLaunchIntentForPackage(requireContext().packageName)
+        val launchIntent = requireContext().packageManager
+            .getLaunchIntentForPackage(requireContext().packageName)
 
-            launchIntent?.addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            )
+        launchIntent?.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        )
 
-            if (launchIntent != null) {
-                startActivity(launchIntent)
-            } else {
-                requireActivity().recreate()
-            }
+        if (launchIntent != null) {
+            startActivity(launchIntent)
+        } else {
+            requireActivity().recreate()
         }
     }
 
@@ -148,7 +142,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
         MaterialAlertDialogBuilder(context)
             .setTitle("Afegir equip")
             .setView(container)
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancel·lar", null)
             .setPositiveButton("Guardar", null)
             .create()
             .also { dialog ->
@@ -173,27 +167,6 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                 }
                 dialog.show()
             }
-    }
-    private fun showEquipOptionsDialog(
-        idEquip: String,
-        nomEquip: String
-    ) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(nomEquip)
-            .setItems(arrayOf("Editar", "Eliminar")) { _, which ->
-                when (which) {
-                    0 -> showEditEquipDialog(
-                        idEquip = idEquip,
-                        initialNomEquip = nomEquip
-                    )
-                    1 -> showDeleteEquipDialog(
-                        idEquip = idEquip,
-                        nomEquip = nomEquip
-                    )
-                }
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
     }
 
     private fun showEditEquipDialog(
@@ -226,7 +199,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
         MaterialAlertDialogBuilder(context)
             .setTitle("Editar equip")
             .setView(container)
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancel·lar", null)
             .setPositiveButton("Guardar", null)
             .create()
             .also { dialog ->
@@ -262,7 +235,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             onDone = { preview ->
                 val message = buildString {
                     append("Vols eliminar l'equip \"$nomEquip\"?\n\n")
-                    append("S'eliminara el seguent: \n")
+                    append("S'eliminarà el següent:\n")
                     append("Jugadores: ${preview.jugadors.size}\n")
                     append("Sessions totals: ${preview.sessionsCount}\n\n")
                     append("Aquesta acció no es pot desfer.")
@@ -271,7 +244,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Confirmar eliminació")
                     .setMessage(message)
-                    .setNegativeButton("Cancelar", null)
+                    .setNegativeButton("Cancel·lar", null)
                     .setPositiveButton("Eliminar") { _, _ ->
                         vm.delete(
                             idEquip = idEquip,
