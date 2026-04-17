@@ -9,6 +9,8 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.marcfradera.shooterranking.data.FirebaseProvider
 import com.marcfradera.shooterranking.databinding.ActivityMainBinding
 import com.marcfradera.shooterranking.ui.vm.AuthViewModel
@@ -21,9 +23,19 @@ class MainActivity : AppCompatActivity() {
     private var adView: AdView? = null
     private var adsInitialized = false
     private var currentDestinationId: Int? = null
+    private var lastLoadedBannerDestinationId: Int? = null
+
+    private val bannerLoadRunnable = Runnable {
+        if (::binding.isInitialized.not()) return@Runnable
+        if (isFinishing || isDestroyed) return@Runnable
+        if (!binding.adContainer.isAttachedToWindow) return@Runnable
+        if (binding.adContainer.visibility != View.VISIBLE) return@Runnable
+        if (!adsInitialized) return@Runnable
+
+        loadBanner()
+    }
 
     companion object {
-        // Usa este ID SOLO para pruebas.
         private const val TEST_BANNER_AD_UNIT_ID =
             "ca-app-pub-3940256099942544/9214589741"
 
@@ -42,7 +54,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initAds()
+        if (canUseGooglePlayServices()) {
+            initAds()
+        } else {
+            adsInitialized = false
+            binding.adContainer.visibility = View.GONE
+        }
 
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -53,10 +70,8 @@ class MainActivity : AppCompatActivity() {
         val startDestination = when {
             authViewModel.isLoggedIn && authViewModel.emailConfirmed ->
                 R.id.temporadesFragment
-
             authViewModel.isLoggedIn && !authViewModel.emailConfirmed ->
                 R.id.verifyFragment
-
             else ->
                 R.id.welcomeFragment
         }
@@ -73,51 +88,99 @@ class MainActivity : AppCompatActivity() {
         refreshBannerForDestination(currentDestinationId)
     }
 
+    private fun canUseGooglePlayServices(): Boolean {
+        val status = GoogleApiAvailability.getInstance()
+            .isGooglePlayServicesAvailable(this)
+        return status == ConnectionResult.SUCCESS
+    }
+
     private fun initAds() {
-        MobileAds.initialize(this) {
-            adsInitialized = true
-            refreshBannerForDestination(currentDestinationId)
+        try {
+            MobileAds.initialize(this) {
+                adsInitialized = true
+                refreshBannerForDestination(currentDestinationId)
+            }
+        } catch (_: Exception) {
+            adsInitialized = false
+            if (::binding.isInitialized) {
+                binding.adContainer.visibility = View.GONE
+                binding.adContainer.removeCallbacks(bannerLoadRunnable)
+            }
         }
     }
 
     private fun refreshBannerForDestination(destinationId: Int?) {
+        if (!::binding.isInitialized) return
+
+        binding.adContainer.removeCallbacks(bannerLoadRunnable)
+
         if (destinationId == null) return
 
         if (destinationId in NO_AD_DESTINATIONS) {
             hideBanner()
+            lastLoadedBannerDestinationId = null
             return
         }
 
-        if (!adsInitialized) {
+        if (!adsInitialized || !canUseGooglePlayServices()) {
             binding.adContainer.visibility = View.GONE
             return
         }
 
+        if (isFinishing || isDestroyed) return
+
         binding.adContainer.visibility = View.VISIBLE
 
-        binding.adContainer.post {
-            loadBanner()
-        }
+        val bannerAlreadyLoadedForThisDestination =
+            adView != null &&
+                    lastLoadedBannerDestinationId == destinationId &&
+                    binding.adContainer.childCount > 0
+
+        if (bannerAlreadyLoadedForThisDestination) return
+
+        binding.adContainer.post(bannerLoadRunnable)
     }
 
     private fun loadBanner() {
-        destroyBanner()
+        if (!::binding.isInitialized) return
+        if (isFinishing || isDestroyed) return
+        if (!binding.adContainer.isAttachedToWindow) return
 
-        val adWidth = calculateAdWidth()
-
-        adView = AdView(this).apply {
-            adUnitId = TEST_BANNER_AD_UNIT_ID
-            setAdSize(
-                AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-                    this@MainActivity,
-                    adWidth
-                )
-            )
-            loadAd(AdRequest.Builder().build())
+        if (!canUseGooglePlayServices()) {
+            hideBanner()
+            return
         }
 
-        binding.adContainer.removeAllViews()
-        binding.adContainer.addView(adView)
+        val adWidth = calculateAdWidth()
+        if (adWidth <= 0) {
+            binding.adContainer.removeCallbacks(bannerLoadRunnable)
+            binding.adContainer.post(bannerLoadRunnable)
+            return
+        }
+
+        try {
+            destroyBanner()
+
+            val newAdView = AdView(this).apply {
+                adUnitId = TEST_BANNER_AD_UNIT_ID
+                setAdSize(
+                    AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
+                        this@MainActivity,
+                        adWidth
+                    )
+                )
+            }
+
+            adView = newAdView
+
+            binding.adContainer.removeAllViews()
+            binding.adContainer.addView(newAdView)
+
+            newAdView.loadAd(AdRequest.Builder().build())
+            lastLoadedBannerDestinationId = currentDestinationId
+        } catch (_: Exception) {
+            hideBanner()
+        }
     }
 
     private fun calculateAdWidth(): Int {
@@ -134,6 +197,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hideBanner() {
+        if (!::binding.isInitialized) return
+
+        binding.adContainer.removeCallbacks(bannerLoadRunnable)
         binding.adContainer.visibility = View.GONE
         destroyBanner()
         binding.adContainer.removeAllViews()
@@ -150,11 +216,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        if (::binding.isInitialized) {
+            binding.adContainer.removeCallbacks(bannerLoadRunnable)
+        }
         adView?.pause()
         super.onPause()
     }
 
     override fun onDestroy() {
+        if (::binding.isInitialized) {
+            binding.adContainer.removeCallbacks(bannerLoadRunnable)
+        }
         destroyBanner()
         super.onDestroy()
     }

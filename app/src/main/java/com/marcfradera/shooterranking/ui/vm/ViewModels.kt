@@ -481,16 +481,21 @@ class ShotSessionViewModel(
         editing: Int?,
         onDone: (Int) -> Unit
     ) = viewModelScope.launch {
+        error = null
 
-        val session = draft ?: return@launch
+        try {
+            val session = draft ?: return@launch
 
-        if (editing == null) {
-            repo.createSession(session)
-        } else {
-            repo.updateSession(session)
+            if (editing == null) {
+                repo.createSession(session)
+            } else {
+                repo.updateSession(session)
+            }
+
+            onDone(session.num_sessio)
+        } catch (e: Exception) {
+            error = e.message ?: "Error guardant la sessió"
         }
-
-        onDone(session.num_sessio)
     }
 
     fun deleteSession(

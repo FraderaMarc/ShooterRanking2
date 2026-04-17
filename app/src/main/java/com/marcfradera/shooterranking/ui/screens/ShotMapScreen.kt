@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -73,6 +74,15 @@ fun ShotMapScreen(
     var playersExpanded by remember { mutableStateOf(false) }
     var showDeleteSessionDialog by remember { mutableStateOf(false) }
 
+    var screenActive by remember { mutableStateOf(true) }
+
+    DisposableEffect(Unit) {
+        screenActive = true
+        onDispose {
+            screenActive = false
+        }
+    }
+
     LaunchedEffect(idEquip) {
         playersVm.load(idEquip)
     }
@@ -105,6 +115,21 @@ fun ShotMapScreen(
     val savedSessions = sessionsVm.sessions.data.orEmpty().sortedByDescending { it.num_sessio }
     val activeSession = sessionsVm.draft
     val newSessionDisplayNumber = savedSessions.size + 1
+
+    val persistCurrentSession = {
+        sessionsVm.saveCurrentSession(
+            idJugador = selectedJugadorId,
+            editing = editingSessionNumber
+        ) { savedSessionNumber ->
+            sessionsVm.load(selectedJugadorId)
+            sessionsVm.draft = sessionsVm.draft?.copy(num_sessio = savedSessionNumber)
+
+            if (screenActive) {
+                editingSessionNumber = savedSessionNumber
+                redrawKey++
+            }
+        }
+    }
 
     CenteredScaffold(
         onBack = onBack,
@@ -249,6 +274,18 @@ fun ShotMapScreen(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = { persistCurrentSession() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    enabled = activeSession != null
+                ) {
+                    Text("Guardar sessió")
+                }
+
                 sessionsVm.error?.let { error ->
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -277,15 +314,7 @@ fun ShotMapScreen(
                     editing = editingSessionNumber,
                     idJugador = selectedJugadorId
                 )
-                sessionsVm.saveCurrentSession(
-                    idJugador = selectedJugadorId,
-                    editing = editingSessionNumber
-                ) { savedSessionNumber ->
-                    sessionsVm.load(selectedJugadorId)
-                    editingSessionNumber = savedSessionNumber
-                    sessionsVm.draft = sessionsVm.draft?.copy(num_sessio = savedSessionNumber)
-                    redrawKey++
-                }
+                persistCurrentSession()
                 zoneDialog = null
             }
         )
