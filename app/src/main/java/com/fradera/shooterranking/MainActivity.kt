@@ -25,6 +25,8 @@ class MainActivity : AppCompatActivity() {
     private var currentDestinationId: Int? = null
     private var lastLoadedBannerDestinationId: Int? = null
 
+    private fun shouldEnableAds(): Boolean = false
+
     private val bannerLoadRunnable = Runnable {
         if (::binding.isInitialized.not()) return@Runnable
         if (isFinishing || isDestroyed) return@Runnable
@@ -54,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (canUseGooglePlayServices()) {
+        if (shouldEnableAds() && canUseGooglePlayServices()) {
             initAds()
         } else {
             adsInitialized = false
@@ -70,8 +72,10 @@ class MainActivity : AppCompatActivity() {
         val startDestination = when {
             authViewModel.isLoggedIn && authViewModel.emailConfirmed ->
                 R.id.temporadesFragment
+
             authViewModel.isLoggedIn && !authViewModel.emailConfirmed ->
                 R.id.verifyFragment
+
             else ->
                 R.id.welcomeFragment
         }
@@ -122,7 +126,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (!adsInitialized || !canUseGooglePlayServices()) {
+        if (!shouldEnableAds() || !adsInitialized || !canUseGooglePlayServices()) {
             binding.adContainer.visibility = View.GONE
             return
         }
@@ -146,7 +150,7 @@ class MainActivity : AppCompatActivity() {
         if (isFinishing || isDestroyed) return
         if (!binding.adContainer.isAttachedToWindow) return
 
-        if (!canUseGooglePlayServices()) {
+        if (!shouldEnableAds() || !canUseGooglePlayServices()) {
             hideBanner()
             return
         }

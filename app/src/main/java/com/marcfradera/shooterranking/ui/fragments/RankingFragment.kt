@@ -19,7 +19,7 @@ class RankingFragment : BaseComposeFragment() {
 
         JugadorsRankingScreen(
             idEquip = equipId,
-            onBack = { requireActivity().onBackPressedDispatcher.onBackPressed() },
+            onBack = { findNavController().navigateUp() },
             onOpenStats = { jugadorId, nomJugador ->
                 shared.setJugador(jugadorId, nomJugador)
                 findNavController().navigate(R.id.action_ranking_to_player_stats)

@@ -1,6 +1,7 @@
 package com.marcfradera.shooterranking.data
 
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentSnapshot
@@ -18,9 +19,15 @@ import com.marcfradera.shooterranking.ui.vm.TemporadaUiItem
 import kotlinx.coroutines.tasks.await
 
 class ShooterRepository(
-    private val auth: com.google.firebase.auth.FirebaseAuth = FirebaseProvider.auth,
-    private val db: FirebaseFirestore = FirebaseProvider.firestore
+    private val authProvider: () -> FirebaseAuth = { FirebaseProvider.auth },
+    private val dbProvider: () -> FirebaseFirestore = { FirebaseProvider.firestore }
 ) {
+
+    private val auth: FirebaseAuth
+        get() = authProvider()
+
+    private val db: FirebaseFirestore
+        get() = dbProvider()
 
     private fun currentUid(): String {
         return auth.currentUser?.uid

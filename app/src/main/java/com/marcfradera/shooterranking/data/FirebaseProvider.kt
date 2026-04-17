@@ -14,52 +14,78 @@ object FirebaseProvider {
     private var initialized = false
 
     private lateinit var firebaseApp: FirebaseApp
-    private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var firebaseFirestore: FirebaseFirestore
+
+    @Volatile
+    private var firebaseAuth: FirebaseAuth? = null
+
+    @Volatile
+    private var firebaseFirestore: FirebaseFirestore? = null
 
     fun initialize(context: Context) {
-        if (initialized) return
+        ensureAppInitialized(context)
+    }
+
+    private fun ensureAppInitialized(context: Context? = null): FirebaseApp {
+        if (initialized) return firebaseApp
 
         synchronized(this) {
-            if (initialized) return
+            if (initialized) return firebaseApp
 
-            val app = FirebaseApp.initializeApp(context) ?: FirebaseApp.getInstance()
+            val app = if (context != null) {
+                val appContext = context.applicationContext
+
+                if (FirebaseApp.getApps(appContext).isNotEmpty()) {
+                    FirebaseApp.getInstance()
+                } else {
+                    FirebaseApp.initializeApp(appContext)
+                        ?: throw IllegalStateException(
+                            "No s'ha pogut inicialitzar Firebase. Revisa google-services.json."
+                        )
+                }
+            } else {
+                FirebaseApp.getInstance()
+            }
+
             firebaseApp = app
-            firebaseAuth = FirebaseAuth.getInstance(app)
-            firebaseFirestore = FirebaseFirestore.getInstance(app)
-
             initialized = true
 
-            Log.d(TAG, "Firebase initialized")
+            Log.d(TAG, "Firebase app initialized")
             Log.d(TAG, "projectId=${app.options.projectId}")
             Log.d(TAG, "applicationId=${app.options.applicationId}")
             Log.d(TAG, "storageBucket=${app.options.storageBucket}")
             Log.d(TAG, "gcmSenderId=${app.options.gcmSenderId}")
+
+            return firebaseApp
         }
     }
 
     val app: FirebaseApp
-        get() {
-            check(initialized) {
-                "FirebaseProvider no està inicialitzat. Crida FirebaseProvider.initialize(context) abans."
-            }
-            return firebaseApp
-        }
+        get() = ensureAppInitialized()
 
     val auth: FirebaseAuth
         get() {
-            check(initialized) {
-                "FirebaseProvider no està inicialitzat. Crida FirebaseProvider.initialize(context) abans."
+            val cached = firebaseAuth
+            if (cached != null) return cached
+
+            synchronized(this) {
+                if (firebaseAuth == null) {
+                    firebaseAuth = FirebaseAuth.getInstance(app)
+                }
+                return firebaseAuth!!
             }
-            return firebaseAuth
         }
 
     val firestore: FirebaseFirestore
         get() {
-            check(initialized) {
-                "FirebaseProvider no està inicialitzat. Crida FirebaseProvider.initialize(context) abans."
+            val cached = firebaseFirestore
+            if (cached != null) return cached
+
+            synchronized(this) {
+                if (firebaseFirestore == null) {
+                    firebaseFirestore = FirebaseFirestore.getInstance(app)
+                }
+                return firebaseFirestore!!
             }
-            return firebaseFirestore
         }
 
     fun runtimeProjectInfo(): String {
