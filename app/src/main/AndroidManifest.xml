@@ -6,7 +6,7 @@
 
     <application
         android:allowBackup="true"
-        android:enableOnBackInvokedCallback="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@drawable/logo"
         android:label="ShooterRanking2"
         android:roundIcon="@drawable/logo"

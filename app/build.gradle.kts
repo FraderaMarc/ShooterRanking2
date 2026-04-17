@@ -34,6 +34,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
     }
@@ -77,11 +78,12 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation("com.google.firebase:firebase-auth-ktx:23.1.0")
-    implementation("com.google.firebase:firebase-firestore-ktx:25.1.1")
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     implementation("com.google.android.gms:play-services-ads:23.6.0")
     implementation("com.google.android.ump:user-messaging-platform:4.0.0")
-
 }

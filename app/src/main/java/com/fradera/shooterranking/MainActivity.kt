@@ -2,6 +2,7 @@ package com.marcfradera.shooterranking
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
@@ -25,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     private var currentDestinationId: Int? = null
     private var lastLoadedBannerDestinationId: Int? = null
 
-    private fun shouldEnableAds(): Boolean = false
+    private fun shouldEnableAds(): Boolean = true
 
     private val bannerLoadRunnable = Runnable {
         if (::binding.isInitialized.not()) return@Runnable
@@ -90,6 +91,16 @@ class MainActivity : AppCompatActivity() {
 
         currentDestinationId = navController.currentDestination?.id
         refreshBannerForDestination(currentDestinationId)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val navigatedBack = navController.popBackStack()
+
+                if (!navigatedBack) {
+                    moveTaskToBack(true)
+                }
+            }
+        })
     }
 
     private fun canUseGooglePlayServices(): Boolean {
