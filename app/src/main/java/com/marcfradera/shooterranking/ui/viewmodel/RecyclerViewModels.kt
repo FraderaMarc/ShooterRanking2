@@ -4,8 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.data.ShooterRepository
 import com.marcfradera.shooterranking.data.model.JugadorRankingItem
+import com.marcfradera.shooterranking.localization.AppLanguageManager
 import com.marcfradera.shooterranking.ui.vm.EquipDeletePreview
 import com.marcfradera.shooterranking.ui.vm.EquipUiItem
 import com.marcfradera.shooterranking.ui.vm.TemporadaDeletePreview
@@ -41,7 +43,7 @@ class TemporadesLiveDataViewModel(
                 load()
                 onDone()
             } catch (e: Exception) {
-                onError(e.message ?: "No s'ha pogut crear la temporada.")
+                onError(e.message ?: AppLanguageManager.text(R.string.error_create_season))
             }
         }
 
@@ -57,7 +59,7 @@ class TemporadesLiveDataViewModel(
             load()
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut actualitzar la temporada.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_update_season))
         }
     }
 
@@ -69,7 +71,7 @@ class TemporadesLiveDataViewModel(
         try {
             onDone(repo.getTemporadaDeletePreview(idTemporada))
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut carregar la previsualització.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_load_preview))
         }
     }
 
@@ -83,7 +85,7 @@ class TemporadesLiveDataViewModel(
             load()
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut eliminar la temporada.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_delete_season))
         }
     }
 }
@@ -120,7 +122,7 @@ class EquipsLiveDataViewModel(
             load(temporadaId)
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut crear l'equip.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_create_team))
         }
     }
 
@@ -144,7 +146,7 @@ class EquipsLiveDataViewModel(
             load(temporadaId)
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut actualitzar l'equip.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_update_team))
         }
     }
 
@@ -156,7 +158,7 @@ class EquipsLiveDataViewModel(
         try {
             onDone(repo.getEquipDeletePreview(idEquip))
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut carregar la previsualització.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_load_preview))
         }
     }
 
@@ -171,7 +173,7 @@ class EquipsLiveDataViewModel(
             load(temporadaId)
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut eliminar l'equip.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_delete_team))
         }
     }
 }
@@ -243,7 +245,7 @@ class RankingLiveDataViewModel(
             load(equipId)
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut crear la jugadora.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_create_player))
         }
     }
 
@@ -255,7 +257,7 @@ class RankingLiveDataViewModel(
         try {
             onDone(repo.getJugadorDeleteSessionsCount(idJugador))
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut carregar la previsualització.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_load_preview))
         }
     }
 
@@ -270,7 +272,7 @@ class RankingLiveDataViewModel(
             load(equipId)
             onDone()
         } catch (e: Exception) {
-            onError(e.message ?: "No s'ha pogut eliminar la jugadora.")
+            onError(e.message ?: AppLanguageManager.text(R.string.error_delete_player))
         }
     }
 }

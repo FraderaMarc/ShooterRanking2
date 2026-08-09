@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.data.FirebaseProvider
 import com.marcfradera.shooterranking.data.ShooterRepository
 import com.marcfradera.shooterranking.data.model.Equip
@@ -13,6 +14,7 @@ import com.marcfradera.shooterranking.data.model.JugadorRankingItem
 import com.marcfradera.shooterranking.data.model.Sessio
 import com.marcfradera.shooterranking.data.model.Temporada
 import com.marcfradera.shooterranking.data.model.ZoneAgg
+import com.marcfradera.shooterranking.localization.AppLanguageManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -98,11 +100,26 @@ class AuthViewModel(
         }
     }
 
-    fun signUp(email: String, password: String, username: String, onDone: () -> Unit) = viewModelScope.launch {
+    fun signUp(
+        email: String,
+        password: String,
+        username: String,
+        termsAccepted: Boolean,
+        privacyAcknowledged: Boolean,
+        legalLanguage: String,
+        onDone: () -> Unit
+    ) = viewModelScope.launch {
         error = null
         loading = true
         try {
-            repo.signUp(email, password, username)
+            repo.signUp(
+                email = email,
+                password = password,
+                username = username,
+                termsAccepted = termsAccepted,
+                privacyAcknowledged = privacyAcknowledged,
+                legalLanguage = legalLanguage
+            )
             refreshAuthStateSuspend()
             onDone()
         } catch (e: Exception) {
@@ -448,14 +465,28 @@ class ShotSessionViewModel(
     var error by mutableStateOf<String?>(null)
         private set
 
+    var isSaving by mutableStateOf(false)
+        private set
+
     fun load(idJugador: String) = viewModelScope.launch {
         sessions = UiState(loading = true)
         sessions = UiState(data = repo.listSessions(idJugador))
     }
 
     fun startNew(idJugador: String) = viewModelScope.launch {
+        if (isSaving) return@launch
         val n = repo.nextSessionNumber(idJugador)
-        draft = Sessio(num_sessio = n, id_jugador = idJugador)
+        draft = Sessio(
+            num_sessio = n,
+            id_jugador = idJugador,
+            nom_sessio = AppLanguageManager.text(R.string.session_number, n)
+        )
+    }
+
+    fun setSessionName(name: String) {
+        if (isSaving) return
+        val current = draft ?: return
+        draft = current.copy(nom_sessio = name.take(25))
     }
 
     private fun findSession(num: Int?) =
@@ -479,6 +510,7 @@ class ShotSessionViewModel(
         editing: Int?,
         idJugador: String
     ) {
+        if (isSaving) return
         val base = draft ?: findSession(editing) ?: return
 
         draft = when (zone) {
@@ -502,7 +534,10 @@ class ShotSessionViewModel(
         editing: Int?,
         onDone: (Int) -> Unit
     ) = viewModelScope.launch {
+        if (isSaving) return@launch
+
         error = null
+        isSaving = true
 
         try {
             val session = draft ?: return@launch
@@ -511,15 +546,15 @@ class ShotSessionViewModel(
                 repo.createSession(session)
             } else {
                 repo.updateSession(session)
-                session
             }
 
             upsertSessionLocally(savedSession)
             draft = savedSession.copy()
-
             onDone(savedSession.num_sessio)
         } catch (e: Exception) {
-            error = e.message ?: "Error guardant la sessió"
+            error = e.message ?: AppLanguageManager.text(R.string.error_save_session)
+        } finally {
+            isSaving = false
         }
     }
 
@@ -528,6 +563,7 @@ class ShotSessionViewModel(
         numSessio: Int,
         onDone: () -> Unit
     ) = viewModelScope.launch {
+        if (isSaving) return@launch
         error = null
         try {
             repo.deleteSession(idJugador, numSessio)

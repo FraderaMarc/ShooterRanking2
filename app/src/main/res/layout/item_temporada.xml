@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
@@ -21,19 +22,19 @@
             android:id="@+id/titleText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="2025-2026"
             android:textColor="@color/sr_text"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="2025-2026" />
 
         <TextView
             android:id="@+id/detailText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Equips: 0"
             android:textColor="@color/sr_text_secondary"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            tools:text="Equips: 0" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

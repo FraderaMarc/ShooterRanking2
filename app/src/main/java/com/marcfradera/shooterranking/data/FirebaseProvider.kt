@@ -5,6 +5,8 @@ import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.marcfradera.shooterranking.R
+import com.marcfradera.shooterranking.localization.AppLanguageManager
 
 object FirebaseProvider {
 
@@ -22,6 +24,7 @@ object FirebaseProvider {
     private var firebaseFirestore: FirebaseFirestore? = null
 
     fun initialize(context: Context) {
+        AppLanguageManager.initialize(context)
         ensureAppInitialized(context)
     }
 
@@ -39,7 +42,7 @@ object FirebaseProvider {
                 } else {
                     FirebaseApp.initializeApp(appContext)
                         ?: throw IllegalStateException(
-                            "No s'ha pogut inicialitzar Firebase. Revisa google-services.json."
+                            AppLanguageManager.text(R.string.error_firebase_init)
                         )
                 }
             } else {
@@ -90,7 +93,7 @@ object FirebaseProvider {
 
     fun runtimeProjectInfo(): String {
         return if (!initialized) {
-            "Firebase no inicialitzat"
+            AppLanguageManager.text(R.string.firebase_not_initialized)
         } else {
             "projectId=${firebaseApp.options.projectId}, applicationId=${firebaseApp.options.applicationId}"
         }

@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -16,14 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marcfradera.shooterranking.localization.AppSettingsDialogs
 import com.marcfradera.shooterranking.ui.vm.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,11 +30,11 @@ fun CenteredScaffold(
     onBack: (() -> Unit)? = null,
     titleContent: (@Composable () -> Unit)? = null,
     showSettings: Boolean = true,
+    scrollableContent: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
     val authVm: AuthViewModel = viewModel()
-    var settingsExpanded by remember { mutableStateOf(false) }
 
     fun restartApp() {
         val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
@@ -73,35 +70,31 @@ fun CenteredScaffold(
                 },
                 actions = {
                     if (showSettings) {
-                        IconButton(onClick = { settingsExpanded = true }) {
-                            Text("⚙")
-                        }
-
-                        DropdownMenu(
-                            expanded = settingsExpanded,
-                            onDismissRequest = { settingsExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Tancar sessió") },
-                                onClick = {
-                                    settingsExpanded = false
-                                    authVm.signOut {
-                                        restartApp()
-                                    }
+                        IconButton(
+                            onClick = {
+                                AppSettingsDialogs.showSettings(context) {
+                                    authVm.signOut { restartApp() }
                                 }
-                            )
+                            }
+                        ) {
+                            Text("⚙")
                         }
                     }
                 }
             )
         }
     ) { padding ->
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(padding)
+            .padding(16.dp)
+            .let { base ->
+                if (scrollableContent) base.verticalScroll(rememberScrollState()) else base
+            }
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(padding)
-                .padding(16.dp),
+            modifier = contentModifier,
             content = content
         )
     }

@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.recyclerview.widget.RecyclerView
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.databinding.ItemEquipBinding
 import com.marcfradera.shooterranking.ui.vm.EquipUiItem
 
@@ -21,54 +22,33 @@ class EquipsAdapter(
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        return VH(
-            ItemEquipBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
-        )
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
+        VH(ItemEquipBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
-    override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.bind(items[position])
-    }
+    override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
 
     override fun getItemCount(): Int = items.size
 
-    inner class VH(private val binding: ItemEquipBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-
+    inner class VH(private val binding: ItemEquipBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: EquipUiItem) {
             binding.root.setOnClickListener { onClick(item) }
-
             binding.root.setOnLongClickListener { view ->
                 PopupMenu(view.context, view).apply {
-                    menu.add(0, 1, 0, "Editar")
-                    menu.add(0, 2, 1, "Eliminar")
-
+                    menu.add(0, 1, 0, view.context.getString(R.string.edit))
+                    menu.add(0, 2, 1, view.context.getString(R.string.delete))
                     setOnMenuItemClickListener { menuItem ->
                         when (menuItem.itemId) {
-                            1 -> {
-                                onEdit(item)
-                                true
-                            }
-                            2 -> {
-                                onDelete(item)
-                                true
-                            }
+                            1 -> { onEdit(item); true }
+                            2 -> { onDelete(item); true }
                             else -> false
                         }
                     }
-
                     show()
                 }
                 true
             }
-
             binding.titleText.text = item.equip.nom_equip
-            binding.detailText.text = "Jugadores: ${item.jugadorsCount}"
+            binding.detailText.text = binding.root.context.getString(R.string.players_count, item.jugadorsCount)
         }
     }
 }

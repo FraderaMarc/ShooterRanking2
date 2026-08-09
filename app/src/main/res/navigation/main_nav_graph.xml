@@ -4,39 +4,39 @@
     android:id="@+id/main_nav_graph"
     app:startDestination="@id/welcomeFragment">
 
-    <fragment android:id="@+id/welcomeFragment" android:name="com.marcfradera.shooterranking.ui.fragments.WelcomeFragment" android:label="Benvinguda">
+    <fragment android:id="@+id/welcomeFragment" android:name="com.marcfradera.shooterranking.ui.fragments.WelcomeFragment" android:label="@string/welcome">
         <action android:id="@+id/action_welcome_to_login" app:destination="@id/loginFragment" />
         <action android:id="@+id/action_welcome_to_signup" app:destination="@id/signupFragment" />
         <action android:id="@+id/action_welcome_to_temporades" app:destination="@id/temporadesFragment" />
     </fragment>
 
-    <fragment android:id="@+id/loginFragment" android:name="com.marcfradera.shooterranking.ui.fragments.LoginFragment" android:label="Iniciar sessió">
+    <fragment android:id="@+id/loginFragment" android:name="com.marcfradera.shooterranking.ui.fragments.LoginFragment" android:label="@string/login">
         <action android:id="@+id/action_login_to_temporades" app:destination="@id/temporadesFragment" />
         <action android:id="@+id/action_login_to_verify" app:destination="@id/verifyFragment" />
     </fragment>
 
-    <fragment android:id="@+id/signupFragment" android:name="com.marcfradera.shooterranking.ui.fragments.SignupFragment" android:label="Registre">
+    <fragment android:id="@+id/signupFragment" android:name="com.marcfradera.shooterranking.ui.fragments.SignupFragment" android:label="@string/registration">
         <action android:id="@+id/action_signup_to_verify" app:destination="@id/verifyFragment" />
     </fragment>
 
-    <fragment android:id="@+id/verifyFragment" android:name="com.marcfradera.shooterranking.ui.fragments.VerifyFragment" android:label="Verificació">
+    <fragment android:id="@+id/verifyFragment" android:name="com.marcfradera.shooterranking.ui.fragments.VerifyFragment" android:label="@string/verification">
         <action android:id="@+id/action_verify_to_temporades" app:destination="@id/temporadesFragment" />
     </fragment>
 
-    <fragment android:id="@+id/temporadesFragment" android:name="com.marcfradera.shooterranking.ui.fragments.TemporadesFragment" android:label="Temporades">
+    <fragment android:id="@+id/temporadesFragment" android:name="com.marcfradera.shooterranking.ui.fragments.TemporadesFragment" android:label="@string/seasons">
         <action android:id="@+id/action_temporades_to_equips" app:destination="@id/equipsFragment" />
     </fragment>
 
-    <fragment android:id="@+id/equipsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.EquipsFragment" android:label="Equips">
+    <fragment android:id="@+id/equipsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.EquipsFragment" android:label="@string/teams">
         <action android:id="@+id/action_equips_to_ranking" app:destination="@id/rankingFragment" />
     </fragment>
 
-    <fragment android:id="@+id/rankingFragment" android:name="com.marcfradera.shooterranking.ui.fragments.RankingFragment" android:label="Classificació">
+    <fragment android:id="@+id/rankingFragment" android:name="com.marcfradera.shooterranking.ui.fragments.RankingFragment" android:label="@string/ranking">
         <action android:id="@+id/action_ranking_to_player_stats" app:destination="@id/playerStatsFragment" />
         <action android:id="@+id/action_ranking_to_shotmap" app:destination="@id/shotMapFragment" />
     </fragment>
 
-    <fragment android:id="@+id/playerStatsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.PlayerStatsFragment" android:label="Estadístiques" />
-    <fragment android:id="@+id/shotMapFragment" android:name="com.marcfradera.shooterranking.ui.fragments.ShotMapFragment" android:label="Mapa de tir" />
+    <fragment android:id="@+id/playerStatsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.PlayerStatsFragment" android:label="@string/statistics" />
+    <fragment android:id="@+id/shotMapFragment" android:name="com.marcfradera.shooterranking.ui.fragments.ShotMapFragment" android:label="@string/shot_map" />
 
 </navigation>

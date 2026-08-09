@@ -7,11 +7,15 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.FieldValue
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.data.model.Equip
 import com.marcfradera.shooterranking.data.model.Jugador
 import com.marcfradera.shooterranking.data.model.Sessio
 import com.marcfradera.shooterranking.data.model.Temporada
 import com.marcfradera.shooterranking.data.model.ZoneAgg
+import com.marcfradera.shooterranking.legal.LegalDocuments
+import com.marcfradera.shooterranking.localization.AppLanguageManager
 import com.marcfradera.shooterranking.ui.vm.EquipDeletePreview
 import com.marcfradera.shooterranking.ui.vm.EquipUiItem
 import com.marcfradera.shooterranking.ui.vm.TemporadaDeletePreview
@@ -23,6 +27,9 @@ class ShooterRepository(
     private val dbProvider: () -> FirebaseFirestore = { FirebaseProvider.firestore }
 ) {
 
+    private fun repoText(resId: Int, vararg args: Any): String =
+        AppLanguageManager.text(resId, *args)
+
     private val auth: FirebaseAuth
         get() = authProvider()
 
@@ -31,7 +38,7 @@ class ShooterRepository(
 
     private fun currentUid(): String {
         return auth.currentUser?.uid
-            ?: throw IllegalStateException("No hi ha cap usuari autenticat.")
+            ?: throw IllegalStateException(repoText(R.string.error_no_authenticated_user))
     }
 
     private fun normalizeUsername(username: String): String {
@@ -42,16 +49,16 @@ class ShooterRepository(
         val normalized = normalizeUsername(username)
 
         if (normalized.length < 3) {
-            throw IllegalArgumentException("El nom d'usuari ha de tenir com a mínim 3 caràcters.")
+            throw IllegalArgumentException(repoText(R.string.error_username_min))
         }
 
         if (normalized.length > 20) {
-            throw IllegalArgumentException("El nom d'usuari no pot superar els 20 caràcters.")
+            throw IllegalArgumentException(repoText(R.string.error_username_max))
         }
 
         if (!Regex("^[a-z0-9._]+$").matches(normalized)) {
             throw IllegalArgumentException(
-                "El nom d'usuari només pot contenir lletres, números, punt i guió baix."
+                repoText(R.string.error_username_chars)
             )
         }
     }
@@ -65,25 +72,22 @@ class ShooterRepository(
                 when {
                     raw.contains("The database (default) does not exist", ignoreCase = true) ->
                         IllegalStateException(
-                            "L'app està connectant a un Firestore que no troba la base de dades default.\n" +
-                                    "Info runtime: $runtimeInfo"
+                            repoText(R.string.error_firestore_no_database, runtimeInfo)
                         )
 
                     e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED ->
                         IllegalStateException(
-                            "Firestore ha rebutjat l'accés. Revisa les regles de seguretat.\n" +
-                                    "Info runtime: $runtimeInfo"
+                            repoText(R.string.error_firestore_permission, runtimeInfo)
                         )
 
                     e.code == FirebaseFirestoreException.Code.UNAVAILABLE ->
                         IllegalStateException(
-                            "Firestore no està disponible ara mateix. Revisa la connexió.\n" +
-                                    "Info runtime: $runtimeInfo"
+                            repoText(R.string.error_firestore_unavailable, runtimeInfo)
                         )
 
                     else ->
                         IllegalStateException(
-                            raw.ifBlank { "S'ha produït un error de Firestore." }
+                            raw.ifBlank { repoText(R.string.error_firestore_generic) }
                         )
                 }
             }
@@ -91,24 +95,24 @@ class ShooterRepository(
             is FirebaseAuthException -> {
                 when {
                     raw.contains("email address is already in use", ignoreCase = true) ->
-                        IllegalStateException("Aquest correu electrònic ja està registrat.")
+                        IllegalStateException(repoText(R.string.error_email_already_registered))
 
                     raw.contains("password is invalid", ignoreCase = true) ||
                             raw.contains("INVALID_LOGIN_CREDENTIALS", ignoreCase = true) ->
-                        IllegalStateException("Credencials incorrectes.")
+                        IllegalStateException(repoText(R.string.error_invalid_credentials))
 
                     raw.contains("connection abort", ignoreCase = true) ||
                             raw.contains("software caused connection abort", ignoreCase = true) ||
                             raw.contains("network", ignoreCase = true) ->
-                        IllegalStateException("Error de connexió amb Firebase. Torna-ho a provar.")
+                        IllegalStateException(repoText(R.string.error_firebase_connection))
 
                     else ->
-                        IllegalStateException(raw.ifBlank { "Error d'autenticació." })
+                        IllegalStateException(raw.ifBlank { repoText(R.string.error_auth_generic) })
                 }
             }
 
             is FirebaseNetworkException ->
-                IllegalStateException("No hi ha connexió a Internet o la connexió ha fallat.")
+                IllegalStateException(repoText(R.string.error_no_internet))
 
             is IllegalArgumentException -> e
             is IllegalStateException -> e
@@ -119,9 +123,9 @@ class ShooterRepository(
                     raw.contains("software caused connection abort", ignoreCase = true) ||
                     raw.contains("network", ignoreCase = true)
                 ) {
-                    IllegalStateException("Error de connexió amb Firebase. Torna-ho a provar.")
+                    IllegalStateException(repoText(R.string.error_firebase_connection))
                 } else {
-                    IllegalStateException(raw.ifBlank { "S'ha produït un error inesperat." })
+                    IllegalStateException(raw.ifBlank { repoText(R.string.error_unexpected) })
                 }
             }
         }
@@ -159,7 +163,17 @@ class ShooterRepository(
         }
     }
 
-    suspend fun signUp(email: String, password: String, username: String) {
+    suspend fun signUp(
+        email: String,
+        password: String,
+        username: String,
+        termsAccepted: Boolean,
+        privacyAcknowledged: Boolean,
+        legalLanguage: String
+    ) {
+        if (!termsAccepted || !privacyAcknowledged) {
+            throw IllegalArgumentException(repoText(R.string.error_legal_required))
+        }
         validateUsername(username)
         val usernameLower = normalizeUsername(username)
 
@@ -169,10 +183,16 @@ class ShooterRepository(
             throw mapFirebaseError(e)
         }
 
-        val user = authResult.user ?: throw IllegalStateException("No s'ha pogut crear l'usuari.")
+        val user = authResult.user ?: throw IllegalStateException(repoText(R.string.error_create_user))
 
         try {
-            reserveUsernameAndCreateProfile(user, username.trim(), usernameLower)
+            reserveUsernameAndCreateProfile(
+                user = user,
+                username = username.trim(),
+                usernameLower = usernameLower,
+                legalLanguage = legalLanguage
+            )
+            auth.setLanguageCode(legalLanguage)
             user.sendEmailVerification().await()
         } catch (e: Exception) {
             try {
@@ -184,7 +204,7 @@ class ShooterRepository(
     }
 
     suspend fun resendVerificationEmail() {
-        val user = auth.currentUser ?: throw IllegalStateException("No hi ha cap usuari autenticat.")
+        val user = auth.currentUser ?: throw IllegalStateException(repoText(R.string.error_no_authenticated_user))
         try {
             user.sendEmailVerification().await()
         } catch (e: Exception) {
@@ -211,7 +231,8 @@ class ShooterRepository(
     private suspend fun reserveUsernameAndCreateProfile(
         user: FirebaseUser,
         username: String,
-        usernameLower: String
+        usernameLower: String,
+        legalLanguage: String
     ) {
         val usernameRef = db.collection("usernames").document(usernameLower)
         val userRef = db.collection("users").document(user.uid)
@@ -221,7 +242,7 @@ class ShooterRepository(
                 val usernameSnap = tx.get(usernameRef)
 
                 if (usernameSnap.exists()) {
-                    throw IllegalStateException("Aquest nom d'usuari ja existeix.")
+                    throw IllegalStateException(repoText(R.string.error_username_exists))
                 }
 
                 tx.set(
@@ -240,7 +261,14 @@ class ShooterRepository(
                         "username" to username,
                         "usernameLower" to usernameLower,
                         "createdAt" to System.currentTimeMillis(),
-                        "emailVerified" to user.isEmailVerified
+                        "emailVerified" to user.isEmailVerified,
+                        "termsAccepted" to true,
+                        "termsVersion" to LegalDocuments.TERMS_VERSION,
+                        "termsAcceptedAt" to FieldValue.serverTimestamp(),
+                        "privacyAcknowledged" to true,
+                        "privacyVersion" to LegalDocuments.PRIVACY_VERSION,
+                        "privacyAcknowledgedAt" to FieldValue.serverTimestamp(),
+                        "legalLanguage" to legalLanguage
                     )
                 )
             }.await()
@@ -277,7 +305,7 @@ class ShooterRepository(
             val ref = db.collection("temporades").add(data).await()
             val snap = ref.get().await()
             snap.toTemporada()
-                ?: throw IllegalStateException("No s'ha pogut crear la temporada.")
+                ?: throw IllegalStateException(repoText(R.string.error_create_season))
         } catch (e: Exception) {
             throw mapFirebaseError(e)
         }
@@ -317,7 +345,7 @@ class ShooterRepository(
             val ref = db.collection("equips").add(data).await()
             val snap = ref.get().await()
             snap.toEquip()
-                ?: throw IllegalStateException("No s'ha pogut crear l'equip.")
+                ?: throw IllegalStateException(repoText(R.string.error_create_team))
         } catch (e: Exception) {
             throw mapFirebaseError(e)
         }
@@ -373,7 +401,7 @@ class ShooterRepository(
             val ref = db.collection("jugadors").add(data).await()
             val snap = ref.get().await()
             snap.toJugador()
-                ?: throw IllegalStateException("No s'ha pogut crear la jugadora.")
+                ?: throw IllegalStateException(repoText(R.string.error_create_player))
         } catch (e: Exception) {
             throw mapFirebaseError(e)
         }
@@ -390,7 +418,19 @@ class ShooterRepository(
                 .documents
 
             docs.mapNotNull { it.toSessio() }
-                .sortedBy { it.num_sessio }
+                .groupBy { it.num_sessio }
+                .values
+                .mapNotNull { duplicates ->
+                    duplicates.maxWithOrNull(
+                        compareBy<Sessio> { it.updatedAt }
+                            .thenBy { it.createdAt }
+                            .thenBy { it.id_sessio }
+                    )
+                }
+                .sortedWith(
+                    compareBy<Sessio> { it.createdAt }
+                        .thenBy { it.num_sessio }
+                )
         } catch (e: Exception) {
             throw mapFirebaseError(e)
         }
@@ -401,52 +441,64 @@ class ShooterRepository(
         return (sessions.maxOfOrNull { it.num_sessio } ?: 0) + 1
     }
 
-    suspend fun createSession(sessio: Sessio): Sessio {
-        val uid = currentUid()
-        val data = hashMapOf(
+    private fun sessionDocumentId(uid: String, idJugador: String, numSessio: Int): String =
+        "${uid}_${idJugador}_${numSessio}"
+
+    private fun sessionCoreData(sessio: Sessio, uid: String): HashMap<String, Any> {
+        val safeName = sessio.nom_sessio
+            .trim()
+            .take(25)
+            .ifBlank { repoText(R.string.session_number, sessio.num_sessio) }
+
+        return hashMapOf(
             "num_sessio" to sessio.num_sessio,
+            "nom_sessio" to safeName,
             "id_jugador" to sessio.id_jugador,
             "userId" to uid,
-
             "tirs_pos_1" to sessio.tirs_pos_1,
             "fets_pos_1" to sessio.fets_pos_1,
-
             "tirs_pos_2" to sessio.tirs_pos_2,
             "fets_pos_2" to sessio.fets_pos_2,
-
             "tirs_pos_3" to sessio.tirs_pos_3,
             "fets_pos_3" to sessio.fets_pos_3,
-
             "tirs_pos_4" to sessio.tirs_pos_4,
             "fets_pos_4" to sessio.fets_pos_4,
-
             "tirs_pos_5" to sessio.tirs_pos_5,
             "fets_pos_5" to sessio.fets_pos_5,
-
             "tirs_pos_6" to sessio.tirs_pos_6,
             "fets_pos_6" to sessio.fets_pos_6,
-
             "tirs_pos_7" to sessio.tirs_pos_7,
             "fets_pos_7" to sessio.fets_pos_7,
-
             "tirs_pos_8" to sessio.tirs_pos_8,
             "fets_pos_8" to sessio.fets_pos_8,
-
             "tirs_pos_9" to sessio.tirs_pos_9,
             "fets_pos_9" to sessio.fets_pos_9,
-
             "tirs_pos_10" to sessio.tirs_pos_10,
             "fets_pos_10" to sessio.fets_pos_10,
-
             "tirs_pos_11" to sessio.tirs_pos_11,
             "fets_pos_11" to sessio.fets_pos_11
         )
+    }
+
+    suspend fun createSession(sessio: Sessio): Sessio {
+        val uid = currentUid()
+        val ref = db.collection("sessions")
+            .document(sessionDocumentId(uid, sessio.id_jugador, sessio.num_sessio))
+        val data = sessionCoreData(sessio, uid).apply {
+            this["createdAt"] = FieldValue.serverTimestamp()
+            this["updatedAt"] = FieldValue.serverTimestamp()
+        }
 
         return try {
-            val ref = db.collection("sessions").add(data).await()
-            val snap = ref.get().await()
-            snap.toSessio()
-                ?: throw IllegalStateException("No s'ha pogut guardar la sessió.")
+            db.runTransaction { tx ->
+                val existing = tx.get(ref)
+                if (!existing.exists()) {
+                    tx.set(ref, data)
+                }
+            }.await()
+
+            ref.get().await().toSessio()
+                ?: throw IllegalStateException(repoText(R.string.error_save_session))
         } catch (e: Exception) {
             throw mapFirebaseError(e)
         }
@@ -533,6 +585,8 @@ class ShooterRepository(
 
     private fun DocumentSnapshot.toSessio(): Sessio? {
         fun i(name: String): Int = getLong(name)?.toInt() ?: 0
+        fun millis(name: String): Long =
+            getTimestamp(name)?.toDate()?.time ?: getLong(name) ?: 0L
 
         val idJugador = getString("id_jugador") ?: return null
         val userId = getString("userId") ?: ""
@@ -542,6 +596,9 @@ class ShooterRepository(
             num_sessio = i("num_sessio"),
             id_jugador = idJugador,
             userId = userId,
+            nom_sessio = getString("nom_sessio").orEmpty(),
+            createdAt = millis("createdAt"),
+            updatedAt = millis("updatedAt"),
 
             tirs_pos_1 = i("tirs_pos_1"),
             fets_pos_1 = i("fets_pos_1"),
@@ -727,15 +784,33 @@ class ShooterRepository(
             .await()
     }
 
-    suspend fun updateSession(session: Sessio) {
-        val query = db.collection("sessions")
-            .whereEqualTo("id_jugador", session.id_jugador)
-            .whereEqualTo("num_sessio", session.num_sessio)
-            .get()
-            .await()
+    suspend fun updateSession(session: Sessio): Sessio {
+        val uid = currentUid()
+        val ref = if (session.id_sessio.isNotBlank()) {
+            db.collection("sessions").document(session.id_sessio)
+        } else {
+            val query = db.collection("sessions")
+                .whereEqualTo("userId", uid)
+                .whereEqualTo("id_jugador", session.id_jugador)
+                .whereEqualTo("num_sessio", session.num_sessio)
+                .get()
+                .await()
 
-        val doc = query.documents.first()
-        doc.reference.set(session).await()
+            query.documents.firstOrNull()?.reference
+                ?: throw IllegalStateException(repoText(R.string.error_session_not_found))
+        }
+
+        val data = sessionCoreData(session, uid).apply {
+            this["updatedAt"] = FieldValue.serverTimestamp()
+        }
+
+        return try {
+            ref.update(data).await()
+            ref.get().await().toSessio()
+                ?: throw IllegalStateException(repoText(R.string.error_save_session))
+        } catch (e: Exception) {
+            throw mapFirebaseError(e)
+        }
     }
 
     suspend fun deleteSession(idJugador: String, numSessio: Int) {
@@ -748,10 +823,12 @@ class ShooterRepository(
             .get()
             .await()
 
-        val doc = query.documents.firstOrNull()
-            ?: throw IllegalStateException("No s'ha trobat la sessió a eliminar.")
+        if (query.documents.isEmpty()) {
+            throw IllegalStateException(repoText(R.string.error_session_not_found))
+        }
 
-        doc.reference.delete().await()
+        // Delete every legacy duplicate for this logical session, not just the first one.
+        query.documents.forEach { it.reference.delete().await() }
     }
 
     suspend fun getJugadorDeleteSessionsCount(idJugador: String): Int {

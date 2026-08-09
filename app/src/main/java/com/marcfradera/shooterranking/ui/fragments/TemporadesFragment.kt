@@ -18,6 +18,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.databinding.FragmentRecyclerScreenBinding
+import com.marcfradera.shooterranking.localization.AppSettingsDialogs
 import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.adapters.TemporadesAdapter
 import com.marcfradera.shooterranking.ui.viewmodel.TemporadesLiveDataViewModel
@@ -55,44 +56,27 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
             }
         )
 
-        binding.titleText.text = "TEMPORADES"
+        binding.titleText.text = getString(R.string.seasons).uppercase()
         binding.backButton.visibility = View.GONE
 
         binding.settingsButton.setOnClickListener {
-            showSettingsDialog()
+            AppSettingsDialogs.showSettings(requireContext()) { logoutAndRestart() }
         }
 
-        binding.primaryButton.text = "Afegir temporada"
+        binding.primaryButton.text = getString(R.string.add_season)
         binding.primaryButton.isEnabled = true
         binding.subtitleText.visibility = View.GONE
-
-        binding.primaryButton.setOnClickListener {
-            showCreateTemporadaDialog()
-        }
+        binding.primaryButton.setOnClickListener { showCreateTemporadaDialog() }
 
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
 
         vm.state.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.data)
-            state.error?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-            }
+            state.error?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
         }
 
         vm.load()
-    }
-
-    private fun showSettingsDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Configuració")
-            .setItems(arrayOf("Tancar sessió")) { _, which ->
-                if (which == 0) {
-                    logoutAndRestart()
-                }
-            }
-            .setNegativeButton("Cancel·lar", null)
-            .show()
     }
 
     private fun logoutAndRestart() {
@@ -101,9 +85,7 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         val launchIntent = requireContext().packageManager
             .getLaunchIntentForPackage(requireContext().packageName)
 
-        launchIntent?.addFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        )
+        launchIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
         if (launchIntent != null) {
             startActivity(launchIntent)
@@ -112,120 +94,82 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
         }
     }
 
-    private fun showCreateTemporadaDialog() {
+    private fun createYearFields(initialStart: Int? = null, initialEnd: Int? = null): Triple<LinearLayout, EditText, EditText> {
         val context = requireContext()
-
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             val pad = (20 * resources.displayMetrics.density).toInt()
             setPadding(pad, 8, pad, 0)
         }
-
-        val anyIniciEdit = EditText(context).apply {
-            hint = "Any inici"
+        val start = EditText(context).apply {
+            hint = getString(R.string.start_year)
             inputType = InputType.TYPE_CLASS_NUMBER
+            initialStart?.let { setText(it.toString()); setSelection(text.length) }
         }
-
-        val anyFiEdit = EditText(context).apply {
-            hint = "Any fi"
+        val end = EditText(context).apply {
+            hint = getString(R.string.end_year)
             inputType = InputType.TYPE_CLASS_NUMBER
+            initialEnd?.let { setText(it.toString()); setSelection(text.length) }
         }
+        container.addView(start)
+        container.addView(end)
+        return Triple(container, start, end)
+    }
 
-        container.addView(anyIniciEdit)
-        container.addView(anyFiEdit)
+    private fun validateYears(start: EditText, end: EditText): Pair<Int, Int>? {
+        val startValue = start.text.toString().trim().toIntOrNull()
+        val endValue = end.text.toString().trim().toIntOrNull()
+        return when {
+            startValue == null -> { start.error = getString(R.string.invalid_year); null }
+            endValue == null -> { end.error = getString(R.string.invalid_year); null }
+            endValue < startValue -> { end.error = getString(R.string.end_year_before_start); null }
+            else -> startValue to endValue
+        }
+    }
 
-        MaterialAlertDialogBuilder(context)
-            .setTitle("Afegir temporada")
+    private fun showCreateTemporadaDialog() {
+        val (container, start, end) = createYearFields()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.add_season)
             .setView(container)
-            .setNegativeButton("Cancel·lar", null)
-            .setPositiveButton("Guardar", null)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.save, null)
             .create()
             .also { dialog ->
                 dialog.setOnShowListener {
                     dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        val anyInici = anyIniciEdit.text.toString().trim().toIntOrNull()
-                        val anyFi = anyFiEdit.text.toString().trim().toIntOrNull()
-
-                        when {
-                            anyInici == null -> anyIniciEdit.error = "Any invàlid"
-                            anyFi == null -> anyFiEdit.error = "Any invàlid"
-                            anyFi < anyInici -> anyFiEdit.error = "L'any final no pot ser menor"
-                            else -> {
-                                vm.create(
-                                    anyInici = anyInici,
-                                    anyFi = anyFi,
-                                    onDone = { dialog.dismiss() },
-                                    onError = {
-                                        Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT)
-                                            .show()
-                                    }
-                                )
-                            }
-                        }
+                        val years = validateYears(start, end) ?: return@setOnClickListener
+                        vm.create(
+                            anyInici = years.first,
+                            anyFi = years.second,
+                            onDone = { dialog.dismiss() },
+                            onError = { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
+                        )
                     }
                 }
                 dialog.show()
             }
     }
 
-    private fun showEditTemporadaDialog(
-        idTemporada: String,
-        initialAnyInici: Int,
-        initialAnyFi: Int
-    ) {
-        val context = requireContext()
-
-        val container = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            val pad = (20 * resources.displayMetrics.density).toInt()
-            setPadding(pad, 8, pad, 0)
-        }
-
-        val anyIniciEdit = EditText(context).apply {
-            hint = "Any inici"
-            inputType = InputType.TYPE_CLASS_NUMBER
-            setText(initialAnyInici.toString())
-            setSelection(text.length)
-        }
-
-        val anyFiEdit = EditText(context).apply {
-            hint = "Any fi"
-            inputType = InputType.TYPE_CLASS_NUMBER
-            setText(initialAnyFi.toString())
-            setSelection(text.length)
-        }
-
-        container.addView(anyIniciEdit)
-        container.addView(anyFiEdit)
-
-        MaterialAlertDialogBuilder(context)
-            .setTitle("Editar temporada")
+    private fun showEditTemporadaDialog(idTemporada: String, initialAnyInici: Int, initialAnyFi: Int) {
+        val (container, start, end) = createYearFields(initialAnyInici, initialAnyFi)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.edit_season)
             .setView(container)
-            .setNegativeButton("Cancel·lar", null)
-            .setPositiveButton("Guardar", null)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.save, null)
             .create()
             .also { dialog ->
                 dialog.setOnShowListener {
                     dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        val anyInici = anyIniciEdit.text.toString().trim().toIntOrNull()
-                        val anyFi = anyFiEdit.text.toString().trim().toIntOrNull()
-
-                        when {
-                            anyInici == null -> anyIniciEdit.error = "Any invàlid"
-                            anyFi == null -> anyFiEdit.error = "Any invàlid"
-                            anyFi < anyInici -> anyFiEdit.error = "L'any final no pot ser menor"
-                            else -> {
-                                vm.update(
-                                    idTemporada = idTemporada,
-                                    anyInici = anyInici,
-                                    anyFi = anyFi,
-                                    onDone = { dialog.dismiss() },
-                                    onError = {
-                                        Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-                                    }
-                                )
-                            }
-                        }
+                        val years = validateYears(start, end) ?: return@setOnClickListener
+                        vm.update(
+                            idTemporada = idTemporada,
+                            anyInici = years.first,
+                            anyFi = years.second,
+                            onDone = { dialog.dismiss() },
+                            onError = { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
+                        )
                     }
                 }
                 dialog.show()
@@ -234,66 +178,51 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
 
     private fun showDeleteTemporadaDialog(idTemporada: String, title: String) {
         val context = requireContext()
-
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             val pad = (20 * resources.displayMetrics.density).toInt()
             setPadding(pad, 8, pad, 0)
         }
-
         val messageView = TextView(context).apply {
-            text = "Carregant dades..."
+            text = getString(R.string.loading_data)
             val bottomPad = (12 * resources.displayMetrics.density).toInt()
             setPadding(0, 0, 0, bottomPad)
         }
-
-        val progressBar = ProgressBar(context).apply {
-            isIndeterminate = true
-        }
-
+        val progressBar = ProgressBar(context).apply { isIndeterminate = true }
         container.addView(messageView)
         container.addView(progressBar)
 
         val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle("Confirmar eliminació")
+            .setTitle(R.string.confirm_delete)
             .setView(container)
-            .setNegativeButton("Cancel·lar", null)
-            .setPositiveButton("Eliminar", null)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.delete, null)
             .create()
 
         dialog.setOnShowListener {
             val deleteButton = dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
             deleteButton.isEnabled = false
-
             vm.loadDeletePreview(
                 idTemporada = idTemporada,
                 onDone = { preview ->
                     if (!dialog.isShowing) return@loadDeletePreview
-
                     messageView.text = buildString {
-                        append("Vols eliminar la temporada \"$title\"?\n\n")
-                        append("S'eliminarà el següent:\n")
-                        append("Equips: ${preview.equips.size}\n")
-                        append("Jugadores: ${preview.jugadorsCount}\n")
-                        append("Sessions totals: ${preview.sessionsCount}\n\n")
-                        append("Aquesta acció no es pot desfer.")
+                        append(getString(R.string.delete_season_question, title)).append("\n\n")
+                        append(getString(R.string.will_delete_following)).append("\n")
+                        append(getString(R.string.teams_count, preview.equips.size)).append("\n")
+                        append(getString(R.string.players_count, preview.jugadorsCount)).append("\n")
+                        append(getString(R.string.total_sessions_count, preview.sessionsCount)).append("\n\n")
+                        append(getString(R.string.cannot_undo))
                     }
-
                     progressBar.visibility = View.GONE
                     deleteButton.isEnabled = true
-
                     deleteButton.setOnClickListener {
                         deleteButton.isEnabled = false
-
                         vm.delete(
                             idTemporada = idTemporada,
                             onDone = {
                                 dialog.dismiss()
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Temporada eliminada",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(requireContext(), getString(R.string.season_deleted), Toast.LENGTH_SHORT).show()
                             },
                             onError = {
                                 deleteButton.isEnabled = true
@@ -304,14 +233,12 @@ class TemporadesFragment : Fragment(R.layout.fragment_recycler_screen) {
                 },
                 onError = {
                     if (!dialog.isShowing) return@loadDeletePreview
-
                     messageView.text = it
                     progressBar.visibility = View.GONE
                     deleteButton.isEnabled = false
                 }
             )
         }
-
         dialog.show()
     }
 
