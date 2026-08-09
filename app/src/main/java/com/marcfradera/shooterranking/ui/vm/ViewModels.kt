@@ -373,7 +373,9 @@ class JugadorsViewModel(
         return jugadors.map { jugador ->
             JugadorSessionsExport(
                 jugador = jugador,
-                sessions = repo.listSessions(jugador.id_jugador).sortedBy { it.num_sessio }
+                sessions = repo.listSessions(jugador.id_jugador).sortedWith(
+                    compareBy<Sessio> { it.createdAt }.thenBy { it.num_sessio }
+                )
             )
         }
     }
@@ -500,7 +502,11 @@ class ShotSessionViewModel(
                         it.num_sessio == session.num_sessio
             } + session
 
-        sessions = UiState(data = updated.sortedBy { it.num_sessio })
+        sessions = UiState(
+            data = updated.sortedWith(
+                compareBy<Sessio> { it.createdAt }.thenBy { it.num_sessio }
+            )
+        )
     }
 
     fun setZoneForCurrentSession(

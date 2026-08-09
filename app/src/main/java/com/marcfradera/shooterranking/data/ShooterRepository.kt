@@ -21,6 +21,7 @@ import com.marcfradera.shooterranking.ui.vm.EquipUiItem
 import com.marcfradera.shooterranking.ui.vm.TemporadaDeletePreview
 import com.marcfradera.shooterranking.ui.vm.TemporadaUiItem
 import kotlinx.coroutines.tasks.await
+import java.util.Locale
 
 class ShooterRepository(
     private val authProvider: () -> FirebaseAuth = { FirebaseProvider.auth },
@@ -444,15 +445,55 @@ class ShooterRepository(
     private fun sessionDocumentId(uid: String, idJugador: String, numSessio: Int): String =
         "${uid}_${idJugador}_${numSessio}"
 
-    private fun sessionCoreData(sessio: Sessio, uid: String): HashMap<String, Any> {
-        val safeName = sessio.nom_sessio
+    private fun safeSessionName(sessio: Sessio): String =
+        sessio.nom_sessio
             .trim()
             .take(25)
             .ifBlank { repoText(R.string.session_number, sessio.num_sessio) }
 
+    private fun normalizeSessionName(name: String): String =
+        name.trim()
+            .replace(Regex("\\s+"), " ")
+            .lowercase(Locale.ROOT)
+
+    private suspend fun ensureSessionNameUnique(sessio: Sessio, safeName: String) {
+        val uid = currentUid()
+        val normalized = normalizeSessionName(safeName)
+
+        val documents = db.collection("sessions")
+            .whereEqualTo("userId", uid)
+            .whereEqualTo("id_jugador", sessio.id_jugador)
+            .get()
+            .await()
+            .documents
+
+        val duplicateExists = documents.any { document ->
+            val existingNumber = document.getLong("num_sessio")?.toInt() ?: 0
+
+            if (existingNumber == sessio.num_sessio) {
+                false
+            } else {
+                val existingName = document.getString("nom_sessio")
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: repoText(R.string.session_number, existingNumber)
+
+                normalizeSessionName(existingName) == normalized
+            }
+        }
+
+        if (duplicateExists) {
+            throw IllegalArgumentException(repoText(R.string.error_session_name_duplicate))
+        }
+    }
+
+    private fun sessionCoreData(sessio: Sessio, uid: String): HashMap<String, Any> {
+        val safeName = safeSessionName(sessio)
+
         return hashMapOf(
             "num_sessio" to sessio.num_sessio,
             "nom_sessio" to safeName,
+            "nom_sessio_normalized" to normalizeSessionName(safeName),
             "id_jugador" to sessio.id_jugador,
             "userId" to uid,
             "tirs_pos_1" to sessio.tirs_pos_1,
@@ -482,6 +523,9 @@ class ShooterRepository(
 
     suspend fun createSession(sessio: Sessio): Sessio {
         val uid = currentUid()
+        val safeName = safeSessionName(sessio)
+        ensureSessionNameUnique(sessio, safeName)
+
         val ref = db.collection("sessions")
             .document(sessionDocumentId(uid, sessio.id_jugador, sessio.num_sessio))
         val data = sessionCoreData(sessio, uid).apply {
@@ -494,6 +538,11 @@ class ShooterRepository(
                 val existing = tx.get(ref)
                 if (!existing.exists()) {
                     tx.set(ref, data)
+                } else {
+                    val updateData = sessionCoreData(sessio, uid).apply {
+                        this["updatedAt"] = FieldValue.serverTimestamp()
+                    }
+                    tx.update(ref, updateData)
                 }
             }.await()
 
@@ -786,6 +835,9 @@ class ShooterRepository(
 
     suspend fun updateSession(session: Sessio): Sessio {
         val uid = currentUid()
+        val safeName = safeSessionName(session)
+        ensureSessionNameUnique(session, safeName)
+
         val ref = if (session.id_sessio.isNotBlank()) {
             db.collection("sessions").document(session.id_sessio)
         } else {
