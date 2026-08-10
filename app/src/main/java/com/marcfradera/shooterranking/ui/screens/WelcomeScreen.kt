@@ -2,6 +2,7 @@ package com.marcfradera.shooterranking.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,59 +38,106 @@ fun WelcomeScreenCustom(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = stringResource(R.string.logo_content_description),
+            /*
+             * Language selector belongs to the first screen shown by the app,
+             * not to LoginScreen. It is deliberately small and discreet.
+             */
+            CompactLanguageFlagSelector(
                 modifier = Modifier
-                    .size(180.dp)
-                    .clip(RoundedCornerShape(32.dp)),
-                contentScale = ContentScale.Fit
+                    .align(Alignment.TopStart)
+                    .padding(
+                        start = 14.dp,
+                        top = 14.dp
+                    )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Shooter Ranking",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            Button(
-                onClick = onLogin,
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
+                verticalArrangement =
+                    Arrangement.Center
             ) {
-                Text(
-                    text = stringResource(R.string.login),
-                    textAlign = TextAlign.Center,
-                    maxLines = 2
+                Image(
+                    painter = painterResource(
+                        id = R.drawable.logo
+                    ),
+                    contentDescription =
+                        stringResource(
+                            R.string.logo_content_description
+                        ),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(
+                            RoundedCornerShape(32.dp)
+                        ),
+                    contentScale =
+                        ContentScale.Fit
                 )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = onSignup,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.register),
-                    textAlign = TextAlign.Center,
-                    maxLines = 2
+                Spacer(
+                    modifier =
+                        Modifier.height(24.dp)
                 )
+
+                Text(
+                    text = "Shooter Ranking",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onBackground
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(40.dp)
+                )
+
+                Button(
+                    onClick = onLogin,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                ) {
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.login
+                            ),
+                        textAlign =
+                            TextAlign.Center,
+                        maxLines = 2
+                    )
+                }
+
+                Spacer(
+                    modifier =
+                        Modifier.height(16.dp)
+                )
+
+                Button(
+                    onClick = onSignup,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                ) {
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.register
+                            ),
+                        textAlign =
+                            TextAlign.Center,
+                        maxLines = 2
+                    )
+                }
             }
         }
     }

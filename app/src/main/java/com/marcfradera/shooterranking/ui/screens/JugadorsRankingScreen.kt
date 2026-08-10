@@ -51,19 +51,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.data.FirebaseProvider
 import com.marcfradera.shooterranking.data.model.Sessio
+import com.marcfradera.shooterranking.localization.AppLanguageManager
 import com.marcfradera.shooterranking.ui.vm.ShotSessionViewModel
 import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 
-private enum class StatsFilter(val label: String) {
-    ALL("Totes"),
-    THREE_PT("Triples"),
-    FREE_THROW("Tir lliure"),
-    TWO_PT("Tirs de 2")
+private fun statsText(resId: Int, vararg args: Any): String =
+    AppLanguageManager.text(resId, *args)
+
+private enum class StatsFilter(val labelRes: Int) {
+    ALL(R.string.filter_all),
+    THREE_PT(R.string.filter_three_pointers),
+    FREE_THROW(R.string.filter_free_throws),
+    TWO_PT(R.string.filter_two_pointers)
 }
 
 private data class ProgressPoint(
@@ -164,7 +169,7 @@ fun PlayerStatsScreen(
     }
 
     CenteredScaffold(
-        title = "Estadistiques $nomJugador",
+        title = statsText(R.string.player_statistics_title, nomJugador),
         onBack = onBack
     ) {
         Column(
@@ -193,7 +198,7 @@ fun PlayerStatsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = sessionsState.error ?: "Error carregant sessions",
+                            text = sessionsState.error ?: statsText(R.string.error_loading_sessions),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -206,13 +211,13 @@ fun PlayerStatsScreen(
                             .padding(top = 32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Aquest jugador encara no té sessions")
+                        Text(statsText(R.string.no_player_sessions))
                     }
                 }
 
                 else -> {
                     Text(
-                        text = "Gràfic de progrés per sessions",
+                        text = statsText(R.string.progress_chart_by_session),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -227,7 +232,7 @@ fun PlayerStatsScreen(
                             FilterChip(
                                 selected = selectedFilter == filter,
                                 onClick = { selectedFilter = filter },
-                                label = { Text(filter.label) }
+                                label = { Text(statsText(filter.labelRes)) }
                             )
                         }
                     }
@@ -267,7 +272,7 @@ fun PlayerStatsScreen(
                     Spacer(Modifier.height(20.dp))
 
                     Text(
-                        text = "Taula per sessions",
+                        text = statsText(R.string.sessions_table),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -293,14 +298,14 @@ fun PlayerStatsScreen(
                             } catch (e: Exception) {
                                 Toast.makeText(
                                     context,
-                                    e.message ?: "No s'ha pogut generar el PDF",
+                                    e.message ?: statsText(R.string.error_generate_pdf),
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Exportar estadístiques a PDF")
+                        Text(statsText(R.string.export_statistics_pdf))
                     }
 
                     Spacer(Modifier.height(24.dp))
@@ -502,14 +507,14 @@ private fun ProgressChart(
         if (showTwoPoint) drawSeries(twoPointData, twoPointColor)
 
         drawContext.canvas.nativeCanvas.drawText(
-            "% encert",
+            statsText(R.string.hit_percentage),
             leftPad - 35f,
             topPad - 25f,
             titlePaint
         )
 
         drawContext.canvas.nativeCanvas.drawText(
-            "Sessions",
+            statsText(R.string.sessions_axis),
             leftPad + chartWidth / 2f - 55f,
             size.height - 18f,
             titlePaint
@@ -529,21 +534,21 @@ private fun LegendRow(
         if (showTriple) {
             LegendItem(
                 color = Color(0xFF1565C0),
-                text = "Triples"
+                text = statsText(R.string.filter_three_pointers)
             )
         }
 
         if (showFreeThrow) {
             LegendItem(
                 color = Color(0xFFD81B60),
-                text = "Tir lliure"
+                text = statsText(R.string.filter_free_throws)
             )
         }
 
         if (showTwoPoint) {
             LegendItem(
                 color = Color(0xFFEF6C00),
-                text = "Tirs de 2"
+                text = statsText(R.string.filter_two_pointers)
             )
         }
     }
@@ -585,7 +590,7 @@ private fun SessionStatsTable(
                 .border(1.dp, borderColor)
         ) {
             Column {
-                HeaderCell("Sessió", SessionStickyColumnWidth)
+                HeaderCell(statsText(R.string.session_header), SessionStickyColumnWidth)
 
                 rows.forEach { row ->
                     SessionTableStickyCell(
@@ -639,19 +644,19 @@ private fun SessionTableStickyCell(
 @Composable
 private fun SessionTableScrollableHeader() {
     Row {
-        HeaderCell("TL", 90.dp)
-        HeaderCell("TL %", 80.dp)
-        HeaderCell("T2", 90.dp)
-        HeaderCell("T2%", 80.dp)
-        HeaderCell("T3", 90.dp)
-        HeaderCell("T3%", 80.dp)
-        HeaderCell("TOTAL", 100.dp)
-        HeaderCell("TOTAL %", 90.dp)
-        HeaderCell("Dreta %", 90.dp)
-        HeaderCell("Esquerra %", 100.dp)
-        HeaderCell("Millor costat", 110.dp)
-        HeaderCell("Millor zona T2", BestZoneColumnWidth)
-        HeaderCell("Millor zona T3", BestZoneColumnWidth)
+        HeaderCell(statsText(R.string.free_throw_short), 90.dp)
+        HeaderCell(statsText(R.string.free_throw_percent_short), 80.dp)
+        HeaderCell(statsText(R.string.two_point_short), 90.dp)
+        HeaderCell(statsText(R.string.two_point_percent_short), 80.dp)
+        HeaderCell(statsText(R.string.three_point_short), 90.dp)
+        HeaderCell(statsText(R.string.three_point_percent_short), 80.dp)
+        HeaderCell(statsText(R.string.total_upper), 100.dp)
+        HeaderCell(statsText(R.string.total_percent), 90.dp)
+        HeaderCell(statsText(R.string.right_percent), 90.dp)
+        HeaderCell(statsText(R.string.left_percent), 100.dp)
+        HeaderCell(statsText(R.string.best_side), 110.dp)
+        HeaderCell(statsText(R.string.best_zone_2pt), BestZoneColumnWidth)
+        HeaderCell(statsText(R.string.best_zone_3pt), BestZoneColumnWidth)
     }
 }
 
@@ -745,7 +750,7 @@ private fun Sessio.toTableRow(tipusPista: String): SessionTableRow {
     val leftPct = playerPctOrNull(leftMade, leftAttempted)
 
     return SessionTableRow(
-        label = "Sessió $num_sessio",
+        label = statsText(R.string.session_number, num_sessio),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
@@ -789,7 +794,7 @@ private fun buildTotalRow(
     val leftPct = playerPctOrNull(leftMade, leftAttempted)
 
     return SessionTableRow(
-        label = "Total",
+        label = statsText(R.string.total),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
@@ -812,15 +817,15 @@ private fun playerBestZoneT2Label(
 ): String {
     val zones = if (isBaseCourt(tipusPista)) {
         listOf(
-            PlayerZoneStat("Ampolla", s.fets_pos_8, s.tirs_pos_8)
+            PlayerZoneStat(statsText(R.string.zone_paint), s.fets_pos_8, s.tirs_pos_8)
         )
     } else {
         listOf(
-            PlayerZoneStat("Poste alt dreta", s.fets_pos_4, s.tirs_pos_4),
-            PlayerZoneStat("Poste alt esquerra", s.fets_pos_5, s.tirs_pos_5),
-            PlayerZoneStat("Poste baix dreta", s.fets_pos_7, s.tirs_pos_7),
-            PlayerZoneStat("Ampolla", s.fets_pos_8, s.tirs_pos_8),
-            PlayerZoneStat("Poste baix esquerra", s.fets_pos_9, s.tirs_pos_9)
+            PlayerZoneStat(statsText(R.string.zone_high_post_right), s.fets_pos_4, s.tirs_pos_4),
+            PlayerZoneStat(statsText(R.string.zone_high_post_left), s.fets_pos_5, s.tirs_pos_5),
+            PlayerZoneStat(statsText(R.string.zone_low_post_right), s.fets_pos_7, s.tirs_pos_7),
+            PlayerZoneStat(statsText(R.string.zone_paint), s.fets_pos_8, s.tirs_pos_8),
+            PlayerZoneStat(statsText(R.string.zone_low_post_left), s.fets_pos_9, s.tirs_pos_9)
         )
     }.filter { it.attempted > 0 }
 
@@ -837,23 +842,23 @@ private fun playerBestZoneT3Label(
 ): String {
     val zones = if (isBaseCourt(tipusPista)) {
         listOf(
-            PlayerZoneStat("45 dreta", s.fets_pos_1, s.tirs_pos_1),
-            PlayerZoneStat("Mig", s.fets_pos_2, s.tirs_pos_2),
-            PlayerZoneStat("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
-            PlayerZoneStat("Triple alt dreta", s.fets_pos_4, s.tirs_pos_4),
-            PlayerZoneStat("Triple alt esquerra", s.fets_pos_5, s.tirs_pos_5),
-            PlayerZoneStat("Triple baix dreta", s.fets_pos_7, s.tirs_pos_7),
-            PlayerZoneStat("Triple baix esquerra", s.fets_pos_9, s.tirs_pos_9),
-            PlayerZoneStat("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
-            PlayerZoneStat("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
+            PlayerZoneStat(statsText(R.string.zone_three_45_right), s.fets_pos_1, s.tirs_pos_1),
+            PlayerZoneStat(statsText(R.string.zone_three_middle), s.fets_pos_2, s.tirs_pos_2),
+            PlayerZoneStat(statsText(R.string.zone_three_45_left), s.fets_pos_3, s.tirs_pos_3),
+            PlayerZoneStat(statsText(R.string.zone_three_high_right), s.fets_pos_4, s.tirs_pos_4),
+            PlayerZoneStat(statsText(R.string.zone_three_high_left), s.fets_pos_5, s.tirs_pos_5),
+            PlayerZoneStat(statsText(R.string.zone_three_low_right), s.fets_pos_7, s.tirs_pos_7),
+            PlayerZoneStat(statsText(R.string.zone_three_low_left), s.fets_pos_9, s.tirs_pos_9),
+            PlayerZoneStat(statsText(R.string.zone_three_corner_right), s.fets_pos_10, s.tirs_pos_10),
+            PlayerZoneStat(statsText(R.string.zone_three_corner_left), s.fets_pos_11, s.tirs_pos_11)
         )
     } else {
         listOf(
-            PlayerZoneStat("45 dreta", s.fets_pos_1, s.tirs_pos_1),
-            PlayerZoneStat("Mig", s.fets_pos_2, s.tirs_pos_2),
-            PlayerZoneStat("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
-            PlayerZoneStat("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
-            PlayerZoneStat("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
+            PlayerZoneStat(statsText(R.string.zone_three_45_right), s.fets_pos_1, s.tirs_pos_1),
+            PlayerZoneStat(statsText(R.string.zone_three_middle), s.fets_pos_2, s.tirs_pos_2),
+            PlayerZoneStat(statsText(R.string.zone_three_45_left), s.fets_pos_3, s.tirs_pos_3),
+            PlayerZoneStat(statsText(R.string.zone_three_corner_right), s.fets_pos_10, s.tirs_pos_10),
+            PlayerZoneStat(statsText(R.string.zone_three_corner_left), s.fets_pos_11, s.tirs_pos_11)
         )
     }.filter { it.attempted > 0 }
 
@@ -867,15 +872,15 @@ private fun playerBestZoneT3Label(
 private fun rankingBestSideLabel(rightPct: Float?, leftPct: Float?): String {
     return when {
         rightPct == null && leftPct == null -> "-"
-        rightPct != null && leftPct == null -> "Dreta"
-        rightPct == null && leftPct != null -> "Esquerra"
+        rightPct != null && leftPct == null -> statsText(R.string.right)
+        rightPct == null && leftPct != null -> statsText(R.string.left)
         else -> {
             val right = rightPct!!
             val left = leftPct!!
             when {
-                right > left -> "Dreta"
-                left > right -> "Esquerra"
-                else -> "Igual"
+                right > left -> statsText(R.string.right)
+                left > right -> statsText(R.string.left)
+                else -> statsText(R.string.equal)
             }
         }
     }
@@ -1071,7 +1076,7 @@ private fun exportPlayerStatsPdfAndShare(
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    context.startActivity(Intent.createChooser(intent, "Compartir PDF"))
+    context.startActivity(Intent.createChooser(intent, statsText(R.string.share_pdf)))
 }
 
 private fun buildPlayerPdfPages(
@@ -1140,7 +1145,7 @@ private fun drawPlayerPdfSinglePage(
         color = android.graphics.Color.DKGRAY
     }
 
-    canvas.drawText("Estadistiques $nomJugador", 45f, 48f, titlePaint)
+    canvas.drawText(statsText(R.string.player_statistics_title, nomJugador), 45f, 48f, titlePaint)
 
     val chartRect = RectF(45f, 110f, 835f, 385f)
     drawPlayerPdfCompactChart(
@@ -1157,7 +1162,7 @@ private fun drawPlayerPdfSinglePage(
     val mapHeight = chartRect.height()
     val mapWidth = mapHeight * (453f / 339f)
 
-    canvas.drawText("Mapa de tir global", 1115f, 95f, subtitlePaint)
+    canvas.drawText(statsText(R.string.global_shot_map), 1115f, 95f, subtitlePaint)
     drawPlayerPdfCourtMap(
         canvas = canvas,
         session = globalSession,
@@ -1168,24 +1173,24 @@ private fun drawPlayerPdfSinglePage(
         tipusPista = tipusPista
     )
 
-    canvas.drawText("Taula per sessions", 45f, 520f, subtitlePaint)
+    canvas.drawText(statsText(R.string.sessions_table), 45f, 520f, subtitlePaint)
 
     val allRows = if (totalRow != null) pageRows + totalRow else pageRows
     val columns = listOf(
-        PlayerPdfColumn("Sessió", 85f),
-        PlayerPdfColumn("TL", 85f),
-        PlayerPdfColumn("TL %", 70f),
-        PlayerPdfColumn("T2", 85f),
-        PlayerPdfColumn("T2%", 70f),
-        PlayerPdfColumn("T3", 85f),
-        PlayerPdfColumn("T3%", 70f),
-        PlayerPdfColumn("TOTAL", 95f),
-        PlayerPdfColumn("TOTAL %", 85f),
-        PlayerPdfColumn("Dreta %", 85f),
-        PlayerPdfColumn("Esquerra %", 95f),
-        PlayerPdfColumn("Millor costat", 110f),
-        PlayerPdfColumn("Millor zona T2", 165f),
-        PlayerPdfColumn("Millor zona T3", 165f)
+        PlayerPdfColumn(statsText(R.string.session_header), 85f),
+        PlayerPdfColumn(statsText(R.string.free_throw_short), 85f),
+        PlayerPdfColumn(statsText(R.string.free_throw_percent_short), 70f),
+        PlayerPdfColumn(statsText(R.string.two_point_short), 85f),
+        PlayerPdfColumn(statsText(R.string.two_point_percent_short), 70f),
+        PlayerPdfColumn(statsText(R.string.three_point_short), 85f),
+        PlayerPdfColumn(statsText(R.string.three_point_percent_short), 70f),
+        PlayerPdfColumn(statsText(R.string.total_upper), 95f),
+        PlayerPdfColumn(statsText(R.string.total_percent), 85f),
+        PlayerPdfColumn(statsText(R.string.right_percent), 85f),
+        PlayerPdfColumn(statsText(R.string.left_percent), 95f),
+        PlayerPdfColumn(statsText(R.string.best_side), 110f),
+        PlayerPdfColumn(statsText(R.string.best_zone_2pt), 165f),
+        PlayerPdfColumn(statsText(R.string.best_zone_3pt), 165f)
     )
 
     val headerY = 550f
@@ -1246,7 +1251,7 @@ private fun drawPlayerPdfCompactChart(
         color = android.graphics.Color.BLACK
     }
 
-    canvas.drawText("Gràfic de sessions", area.left, area.top - 12f, smallTitlePaint)
+    canvas.drawText(statsText(R.string.sessions_chart), area.left, area.top - 12f, smallTitlePaint)
 
     val left = area.left + 42f
     val top = area.top + 8f
@@ -1365,7 +1370,7 @@ private fun drawPlayerPdfCompactChart(
         canvas.drawText(tick.toString(), x - 4f, bottom + 22f, textPaint)
     }
 
-    canvas.drawText("Sessions", left + width / 2f - 25f, bottom + 44f, textPaint)
+    canvas.drawText(statsText(R.string.sessions_axis), left + width / 2f - 25f, bottom + 44f, textPaint)
 }
 
 private fun drawPlayerPdfLegend(
@@ -1387,9 +1392,28 @@ private fun drawPlayerPdfLegend(
         canvas.drawText(label, x + 36f, y, textPaint)
     }
 
-    item(startX, "Triples", "#1565C0")
-    item(startX + 170f, "Tir lliure", "#D81B60")
-    item(startX + 370f, "Tirs de 2", "#EF6C00")
+    item(startX, statsText(R.string.filter_three_pointers), "#1565C0")
+    item(startX + 170f, statsText(R.string.filter_free_throws), "#D81B60")
+    item(startX + 370f, statsText(R.string.filter_two_pointers), "#EF6C00")
+}
+
+
+private fun drawPlayerPdfTextFitted(
+    canvas: android.graphics.Canvas,
+    text: String,
+    rect: RectF,
+    paint: Paint,
+    horizontalPadding: Float = 4f,
+    minTextSize: Float = 8f
+) {
+    val originalSize = paint.textSize
+    val availableWidth = (rect.width() - horizontalPadding * 2f).coerceAtLeast(1f)
+    while (paint.measureText(text) > availableWidth && paint.textSize > minTextSize) {
+        paint.textSize -= 0.5f
+    }
+    val textY = rect.centerY() - (paint.descent() + paint.ascent()) / 2f
+    canvas.drawText(text, rect.left + horizontalPadding, textY, paint)
+    paint.textSize = originalSize
 }
 
 private fun drawPlayerPdfTableHeader(
@@ -1420,8 +1444,7 @@ private fun drawPlayerPdfTableHeader(
         val rect = RectF(x, startY, x + column.width, startY + rowHeight)
         canvas.drawRect(rect, backgroundPaint)
         canvas.drawRect(rect, borderPaint)
-        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(column.title, x + 4f, textY, textPaint)
+        drawPlayerPdfTextFitted(canvas, column.title, rect, textPaint)
         x += column.width
     }
 }
@@ -1477,8 +1500,7 @@ private fun drawPlayerPdfStatsRow(
         val rect = RectF(x, startY, x + columns[index].width, startY + rowHeight)
         canvas.drawRect(rect, bgPaint)
         canvas.drawRect(rect, borderPaint)
-        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(value, x + 4f, textY, textPaint)
+        drawPlayerPdfTextFitted(canvas, value, rect, textPaint)
         x += columns[index].width
     }
 }

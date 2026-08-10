@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
@@ -53,10 +54,12 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.data.FirebaseProvider
 import com.marcfradera.shooterranking.data.model.Jugador
 import com.marcfradera.shooterranking.data.model.JugadorRankingItem
 import com.marcfradera.shooterranking.data.model.Sessio
+import com.marcfradera.shooterranking.localization.AppLanguageManager
 import com.marcfradera.shooterranking.ui.vm.JugadorSessionsExport
 import com.marcfradera.shooterranking.ui.vm.JugadorsViewModel
 import kotlinx.coroutines.launch
@@ -65,11 +68,14 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.sqrt
 
-private enum class RankingFilter(val label: String) {
-    TOTAL("Tirs totals"),
-    FREE_THROW("Tir lliure"),
-    THREE_PT("Triples"),
-    TWO_PT("Tirs de 2")
+private fun rankingText(resId: Int, vararg args: Any): String =
+    AppLanguageManager.text(resId, *args)
+
+private enum class RankingFilter(val labelRes: Int) {
+    TOTAL(R.string.filter_total_shots),
+    FREE_THROW(R.string.filter_free_throws),
+    THREE_PT(R.string.filter_three_pointers),
+    TWO_PT(R.string.filter_two_pointers)
 }
 
 private val PLAYER_POSITIONS = listOf(
@@ -180,16 +186,16 @@ fun JugadorsRankingScreen(
         vm.load(idEquip, selectedFilter.name)
     }
 
-    CenteredScaffold(title = "Classificació", onBack = onBack) {
+    CenteredScaffold(title = rankingText(R.string.ranking), onBack = onBack) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
                 onClick = { showDialog = true },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).height(64.dp)
             ) {
-                Text("Afegir jugador")
+                Text(rankingText(R.string.add_player), textAlign = TextAlign.Center, maxLines = 2)
             }
 
             Button(
@@ -202,7 +208,7 @@ fun JugadorsRankingScreen(
                             if (players.isEmpty()) {
                                 Toast.makeText(
                                     context,
-                                    "No hi ha jugadores per exportar",
+                                    rankingText(R.string.no_players_to_export),
                                     Toast.LENGTH_LONG
                                 ).show()
                             } else {
@@ -215,15 +221,15 @@ fun JugadorsRankingScreen(
                         } catch (e: Exception) {
                             Toast.makeText(
                                 context,
-                                e.message ?: "No s'ha pogut generar el PDF",
+                                e.message ?: rankingText(R.string.error_generate_pdf),
                                 Toast.LENGTH_LONG
                             ).show()
                         }
                     }
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).height(64.dp)
             ) {
-                Text("Exportar equip PDF")
+                Text(rankingText(R.string.export_team_pdf), textAlign = TextAlign.Center, maxLines = 2)
             }
         }
 
@@ -237,7 +243,7 @@ fun JugadorsRankingScreen(
                 FilterChip(
                     selected = selectedFilter == filter,
                     onClick = { selectedFilter = filter },
-                    label = { Text(filter.label) }
+                    label = { Text(rankingText(filter.labelRes)) }
                 )
             }
         }
@@ -280,7 +286,7 @@ fun JugadorsRankingScreen(
                             .weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Encara no hi ha jugadores.")
+                        Text(rankingText(R.string.no_players))
                     }
                 } else {
                     LazyColumn(
@@ -407,7 +413,7 @@ private fun PlayerRow(
                             Spacer(Modifier.height(6.dp))
 
                             Text(
-                                text = "Dorsal ${formatDorsal(item.jugador.numero_jugador)} · ${positionLabel(item.jugador.posicio_jugador)}",
+                                text = rankingText(R.string.jersey_position_format, formatDorsal(item.jugador.numero_jugador), positionDisplayLabel(positionLabel(item.jugador.posicio_jugador))),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
@@ -415,7 +421,7 @@ private fun PlayerRow(
                             Spacer(Modifier.height(4.dp))
 
                             Text(
-                                text = "Sessions: ${item.sessions}",
+                                text = rankingText(R.string.sessions_count, item.sessions),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -446,14 +452,14 @@ private fun PlayerRow(
                             onClick = onStats,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Stats")
+                            Text(rankingText(R.string.statistics), textAlign = TextAlign.Center)
                         }
 
                         OutlinedButton(
                             onClick = onShots,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Mapa")
+                            Text(rankingText(R.string.map_short), textAlign = TextAlign.Center)
                         }
                     }
                 }
@@ -465,28 +471,28 @@ private fun PlayerRow(
             onDismissRequest = { expanded = false }
         ) {
             DropdownMenuItem(
-                text = { Text("Estadístiques") },
+                text = { Text(rankingText(R.string.statistics)) },
                 onClick = {
                     expanded = false
                     onStats()
                 }
             )
             DropdownMenuItem(
-                text = { Text("Mapa de tir") },
+                text = { Text(rankingText(R.string.shot_map)) },
                 onClick = {
                     expanded = false
                     onShots()
                 }
             )
             DropdownMenuItem(
-                text = { Text("Editar") },
+                text = { Text(rankingText(R.string.edit)) },
                 onClick = {
                     expanded = false
                     onEdit()
                 }
             )
             DropdownMenuItem(
-                text = { Text("Eliminar") },
+                text = { Text(rankingText(R.string.delete)) },
                 onClick = {
                     expanded = false
                     onDelete()
@@ -517,13 +523,13 @@ private fun CreateJugadorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Afegir jugadora") },
+        title = { Text(rankingText(R.string.add_player)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = nom,
                     onValueChange = { nom = it },
-                    label = { Text("Nom") },
+                    label = { Text(rankingText(R.string.name)) },
                     singleLine = true
                 )
 
@@ -539,7 +545,7 @@ private fun CreateJugadorDialog(
                             }
                         }
                     },
-                    label = { Text("Dorsal (0-100)") },
+                    label = { Text(rankingText(R.string.jersey_number_range)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
@@ -562,12 +568,12 @@ private fun CreateJugadorDialog(
                 },
                 enabled = formValid
             ) {
-                Text("Crear")
+                Text(rankingText(R.string.create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel·lar")
+                Text(rankingText(R.string.cancel))
             }
         }
     )
@@ -601,13 +607,13 @@ private fun EditJugadorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar jugadora") },
+        title = { Text(rankingText(R.string.edit_player)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = nom,
                     onValueChange = { nom = it },
-                    label = { Text("Nom") },
+                    label = { Text(rankingText(R.string.name)) },
                     singleLine = true
                 )
 
@@ -623,7 +629,7 @@ private fun EditJugadorDialog(
                             }
                         }
                     },
-                    label = { Text("Dorsal (0-100)") },
+                    label = { Text(rankingText(R.string.jersey_number_range)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
@@ -646,12 +652,12 @@ private fun EditJugadorDialog(
                 },
                 enabled = formValid
             ) {
-                Text("Guardar")
+                Text(rankingText(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel·lar")
+                Text(rankingText(R.string.cancel))
             }
         }
     )
@@ -666,7 +672,7 @@ private fun PositionDropdownField(
 
     Column {
         Text(
-            text = "Posició",
+            text = rankingText(R.string.position),
             style = MaterialTheme.typography.labelMedium
         )
 
@@ -678,7 +684,7 @@ private fun PositionDropdownField(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = if (selected.isBlank()) "Selecciona posició" else selected,
+                    text = if (selected.isBlank()) rankingText(R.string.select_position) else positionDisplayLabel(selected),
                     modifier = Modifier.weight(1f)
                 )
                 Text("▼")
@@ -691,7 +697,7 @@ private fun PositionDropdownField(
             ) {
                 PLAYER_POSITIONS.forEach { option ->
                     DropdownMenuItem(
-                        text = { Text(option) },
+                        text = { Text(positionDisplayLabel(option)) },
                         onClick = {
                             onSelect(option)
                             expanded = false
@@ -711,18 +717,18 @@ private fun DeleteJugadorDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Eliminar jugadora") },
+        title = { Text(rankingText(R.string.delete_player)) },
         text = {
-            Text("Vols eliminar $nomJugador? També s'eliminaran totes les seves sessions de tir.")
+            Text(rankingText(R.string.delete_player_question, nomJugador))
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Eliminar")
+                Text(rankingText(R.string.delete))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel·lar")
+                Text(rankingText(R.string.cancel))
             }
         }
     )
@@ -746,6 +752,15 @@ private fun positionLabel(posicio: String): String {
         "5", "pivot", "pívot" -> "Pivot"
         else -> "Posició desconeguda"
     }
+}
+
+private fun positionDisplayLabel(canonical: String): String = when (canonical) {
+    "Base" -> rankingText(R.string.position_point_guard)
+    "Escolta" -> rankingText(R.string.position_shooting_guard)
+    "Aler" -> rankingText(R.string.position_small_forward)
+    "Aler-Pivot" -> rankingText(R.string.position_power_forward)
+    "Pivot" -> rankingText(R.string.position_center)
+    else -> rankingText(R.string.position_unknown)
 }
 private fun exportAllPlayersStatsPdfAndShare(
     context: Context,
@@ -819,7 +834,7 @@ private fun exportAllPlayersStatsPdfAndShare(
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    context.startActivity(Intent.createChooser(intent, "Compartir PDF"))
+    context.startActivity(Intent.createChooser(intent, rankingText(R.string.share_pdf)))
 }
 
 private fun buildTeamExportRow(
@@ -902,7 +917,7 @@ private fun buildTeamTotalRow(
     val rightPct = rankingPctOrNull(rightMade, rightAttempted)
     val leftPct = rankingPctOrNull(leftMade, leftAttempted)
 
-    val jugador = rows.firstOrNull()?.jugador ?: Jugador(nom_jugador = "TOTAL EQUIP")
+    val jugador = rows.firstOrNull()?.jugador ?: Jugador(nom_jugador = rankingText(R.string.team_total))
 
     return TeamExportRow(
         jugador = jugador,
@@ -920,7 +935,7 @@ private fun buildTeamTotalRow(
         bestSide = rankingBestSideLabel(rightPct, leftPct),
         bestZoneT2 = rankingBestZoneT2Label(merged, tipusPista),
         bestZoneT3 = rankingBestZoneT3Label(merged, tipusPista),
-        label = "TOTAL EQUIP",
+        label = rankingText(R.string.team_total),
         isTotalRow = true
     )
 }
@@ -974,21 +989,21 @@ private fun drawTeamSummaryPages(
     val rowHeight = 30f
 
     val columns = listOf(
-        RankingPdfColumn("Jugadora", 170f),
-        RankingPdfColumn("Sessions", 85f),
-        RankingPdfColumn("TL", 85f),
-        RankingPdfColumn("TL %", 70f),
-        RankingPdfColumn("T2", 85f),
-        RankingPdfColumn("T2%", 70f),
-        RankingPdfColumn("T3", 85f),
-        RankingPdfColumn("T3%", 70f),
-        RankingPdfColumn("TOTAL", 95f),
-        RankingPdfColumn("TOTAL %", 85f),
-        RankingPdfColumn("Dreta %", 85f),
-        RankingPdfColumn("Esquerra %", 95f),
-        RankingPdfColumn("Millor costat", 110f),
-        RankingPdfColumn("Millor zona T2", 130f),
-        RankingPdfColumn("Millor zona T3", 130f)
+        RankingPdfColumn(rankingText(R.string.player), 170f),
+        RankingPdfColumn(rankingText(R.string.sessions_axis), 85f),
+        RankingPdfColumn(rankingText(R.string.free_throw_short), 85f),
+        RankingPdfColumn(rankingText(R.string.free_throw_percent_short), 70f),
+        RankingPdfColumn(rankingText(R.string.two_point_short), 85f),
+        RankingPdfColumn(rankingText(R.string.two_point_percent_short), 70f),
+        RankingPdfColumn(rankingText(R.string.three_point_short), 85f),
+        RankingPdfColumn(rankingText(R.string.three_point_percent_short), 70f),
+        RankingPdfColumn(rankingText(R.string.total_upper), 95f),
+        RankingPdfColumn(rankingText(R.string.total_percent), 85f),
+        RankingPdfColumn(rankingText(R.string.right_percent), 85f),
+        RankingPdfColumn(rankingText(R.string.left_percent), 95f),
+        RankingPdfColumn(rankingText(R.string.best_side), 110f),
+        RankingPdfColumn(rankingText(R.string.best_zone_2pt), 130f),
+        RankingPdfColumn(rankingText(R.string.best_zone_3pt), 130f)
     )
 
     val allRows = rows + totalRow
@@ -1010,14 +1025,14 @@ private fun drawTeamSummaryPages(
         color = android.graphics.Color.DKGRAY
     }
 
-    firstCanvas.drawText("Estadistiques equip", margin, 48f, titlePaint)
-    firstCanvas.drawText("Gràfic de sessions i taula global per jugadores", margin, 78f, subtitlePaint)
+    firstCanvas.drawText(rankingText(R.string.team_statistics), margin, 48f, titlePaint)
+    firstCanvas.drawText(rankingText(R.string.team_chart_and_global_table), margin, 78f, subtitlePaint)
 
     val chartRect = RectF(45f, 120f, 850f, 420f)
     drawRankingPdfProgressChart(
         canvas = firstCanvas,
         area = chartRect,
-        title = "Gràfic de sessions",
+        title = rankingText(R.string.sessions_chart),
         tripleData = tripleData,
         freeThrowData = freeThrowData,
         twoPointData = twoPointData
@@ -1029,7 +1044,7 @@ private fun drawTeamSummaryPages(
     val tableFitsOnFirstPage = allRows.size <= firstPageRows
 
     if (tableFitsOnFirstPage) {
-        firstCanvas.drawText("Taula global per jugadores", margin, 545f, subtitlePaint)
+        firstCanvas.drawText(rankingText(R.string.global_players_table), margin, 545f, subtitlePaint)
 
         drawRankingPdfTableHeader(
             canvas = firstCanvas,
@@ -1067,9 +1082,9 @@ private fun drawTeamSummaryPages(
         val page = document.startPage(pageInfoChunk)
         val canvas = page.canvas
 
-        canvas.drawText("Estadistiques equip", margin, 55f, titlePaint)
+        canvas.drawText(rankingText(R.string.team_statistics), margin, 55f, titlePaint)
         canvas.drawText(
-            if (index == 0) "Taula global per jugadores" else "Taula global per jugadores (continuació)",
+            if (index == 0) rankingText(R.string.global_players_table) else rankingText(R.string.global_players_table_continued),
             margin,
             85f,
             subtitlePaint
@@ -1138,20 +1153,20 @@ private fun drawTeamPlayerPages(
     val pageWidth = 1650
     val pageHeight = 1000
     val columns = listOf(
-        RankingPdfColumn("Sessió", 85f),
-        RankingPdfColumn("TL", 85f),
-        RankingPdfColumn("TL %", 70f),
-        RankingPdfColumn("T2", 85f),
-        RankingPdfColumn("T2%", 70f),
-        RankingPdfColumn("T3", 85f),
-        RankingPdfColumn("T3%", 70f),
-        RankingPdfColumn("TOTAL", 95f),
-        RankingPdfColumn("TOTAL %", 85f),
-        RankingPdfColumn("Dreta %", 85f),
-        RankingPdfColumn("Esquerra %", 95f),
-        RankingPdfColumn("Millor costat", 110f),
-        RankingPdfColumn("Millor zona T2", 130f),
-        RankingPdfColumn("Millor zona T3", 130f)
+        RankingPdfColumn(rankingText(R.string.session_header), 85f),
+        RankingPdfColumn(rankingText(R.string.free_throw_short), 85f),
+        RankingPdfColumn(rankingText(R.string.free_throw_percent_short), 70f),
+        RankingPdfColumn(rankingText(R.string.two_point_short), 85f),
+        RankingPdfColumn(rankingText(R.string.two_point_percent_short), 70f),
+        RankingPdfColumn(rankingText(R.string.three_point_short), 85f),
+        RankingPdfColumn(rankingText(R.string.three_point_percent_short), 70f),
+        RankingPdfColumn(rankingText(R.string.total_upper), 95f),
+        RankingPdfColumn(rankingText(R.string.total_percent), 85f),
+        RankingPdfColumn(rankingText(R.string.right_percent), 85f),
+        RankingPdfColumn(rankingText(R.string.left_percent), 95f),
+        RankingPdfColumn(rankingText(R.string.best_side), 110f),
+        RankingPdfColumn(rankingText(R.string.best_zone_2pt), 130f),
+        RankingPdfColumn(rankingText(R.string.best_zone_3pt), 130f)
     )
 
     val maxRowsPerPage = 14
@@ -1172,10 +1187,10 @@ private fun drawTeamPlayerPages(
             color = android.graphics.Color.DKGRAY
         }
 
-        canvas.drawText("Estadistiques $nomJugador", 45f, 48f, titlePaint)
+        canvas.drawText(rankingText(R.string.player_statistics_title, nomJugador), 45f, 48f, titlePaint)
         canvas.drawText(
-            if (pageIndex == 0) "Gràfic, mapa de tir global i taula per sessions"
-            else "Gràfic, mapa de tir global i taula per sessions (continuació)",
+            if (pageIndex == 0) rankingText(R.string.player_pdf_summary)
+            else rankingText(R.string.player_pdf_summary_continued),
             45f,
             78f,
             subtitlePaint
@@ -1185,7 +1200,7 @@ private fun drawTeamPlayerPages(
         drawRankingPdfProgressChart(
             canvas = canvas,
             area = chartRect,
-            title = "Gràfic de sessions",
+            title = rankingText(R.string.sessions_chart),
             tripleData = tripleData,
             freeThrowData = freeThrowData,
             twoPointData = twoPointData
@@ -1196,7 +1211,7 @@ private fun drawTeamPlayerPages(
         val mapHeight = chartRect.height()
         val mapWidth = mapHeight * (453f / 339f)
 
-        canvas.drawText("Mapa de tir global", 1115f, 95f, subtitlePaint)
+        canvas.drawText(rankingText(R.string.global_shot_map), 1115f, 95f, subtitlePaint)
         drawRankingPdfCourtMap(
             canvas = canvas,
             session = globalSession,
@@ -1207,7 +1222,7 @@ private fun drawTeamPlayerPages(
             tipusPista = tipusPista
         )
 
-        canvas.drawText("Taula per sessions", 45f, 540f, subtitlePaint)
+        canvas.drawText(rankingText(R.string.sessions_table), 45f, 540f, subtitlePaint)
 
         val headerY = 570f
         val availableHeight = pageHeight - headerY - 40f
@@ -1233,7 +1248,7 @@ private fun drawTeamPlayerPages(
                 startY = currentY,
                 rowHeight = rowHeight,
                 textSize = textSize,
-                isTotal = row.label == "Total"
+                isTotal = row.label == rankingText(R.string.total)
             )
             currentY += rowHeight
         }
@@ -1354,7 +1369,7 @@ private fun drawRankingPdfProgressChart(
         canvas.drawText(tick.toString(), x - 4f, bottom + 22f, textPaint)
     }
 
-    canvas.drawText("Sessions", left + width / 2f - 25f, bottom + 44f, textPaint)
+    canvas.drawText(rankingText(R.string.sessions_axis), left + width / 2f - 25f, bottom + 44f, textPaint)
 }
 
 private fun drawRankingPdfLegend(
@@ -1376,9 +1391,28 @@ private fun drawRankingPdfLegend(
         canvas.drawText(label, x + 36f, y, textPaint)
     }
 
-    item(startX, "Triples", "#1565C0")
-    item(startX + 170f, "Tir lliure", "#D81B60")
-    item(startX + 370f, "Tirs de 2", "#EF6C00")
+    item(startX, rankingText(R.string.filter_three_pointers), "#1565C0")
+    item(startX + 170f, rankingText(R.string.filter_free_throws), "#D81B60")
+    item(startX + 370f, rankingText(R.string.filter_two_pointers), "#EF6C00")
+}
+
+
+private fun drawRankingPdfTextFitted(
+    canvas: android.graphics.Canvas,
+    text: String,
+    rect: RectF,
+    paint: Paint,
+    horizontalPadding: Float = 4f,
+    minTextSize: Float = 8f
+) {
+    val originalSize = paint.textSize
+    val availableWidth = (rect.width() - horizontalPadding * 2f).coerceAtLeast(1f)
+    while (paint.measureText(text) > availableWidth && paint.textSize > minTextSize) {
+        paint.textSize -= 0.5f
+    }
+    val textY = rect.centerY() - (paint.descent() + paint.ascent()) / 2f
+    canvas.drawText(text, rect.left + horizontalPadding, textY, paint)
+    paint.textSize = originalSize
 }
 
 private fun drawRankingPdfTableHeader(
@@ -1410,9 +1444,7 @@ private fun drawRankingPdfTableHeader(
         val rect = RectF(x, startY, x + column.width, startY + rowHeight)
         canvas.drawRect(rect, backgroundPaint)
         canvas.drawRect(rect, borderPaint)
-
-        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(column.title, x + 4f, textY, textPaint)
+        drawRankingPdfTextFitted(canvas, column.title, rect, textPaint)
 
         x += column.width
     }
@@ -1491,9 +1523,7 @@ private fun drawTeamExportRow(
         val rect = RectF(x, startY, x + columns[index].width, startY + rowHeight)
         canvas.drawRect(rect, backgroundPaint)
         canvas.drawRect(rect, borderPaint)
-
-        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(value, x + 4f, textY, textPaint)
+        drawRankingPdfTextFitted(canvas, value, rect, textPaint)
 
         x += columns[index].width
     }
@@ -1522,7 +1552,7 @@ private fun Sessio.toTeamPdfPlayerRow(tipusPista: String): TeamPdfPlayerRow {
     val leftPct = rankingPctOrNull(leftMade, leftAttempted)
 
     return TeamPdfPlayerRow(
-        label = "Sessió $num_sessio",
+        label = rankingText(R.string.session_number, num_sessio),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
@@ -1570,7 +1600,7 @@ private fun buildTeamPdfPlayerTotalRow(
     val leftPct = rankingPctOrNull(leftMade, leftAttempted)
 
     return TeamPdfPlayerRow(
-        label = "Total",
+        label = rankingText(R.string.total),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
@@ -1640,9 +1670,7 @@ private fun drawTeamPdfPlayerStatsRow(
 
         canvas.drawRect(rect, bgPaint)
         canvas.drawRect(rect, borderPaint)
-
-        val textY = startY + rowHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(value, x + 4f, textY, textPaint)
+        drawRankingPdfTextFitted(canvas, value, rect, textPaint)
 
         x += columns[index].width
     }
@@ -2267,15 +2295,15 @@ private fun rankingBestZoneT2Label(
 ): String {
     val zones = if (rankingIsBaseCourt(tipusPista)) {
         listOf(
-            RankingZoneStat("Ampolla", s.fets_pos_8, s.tirs_pos_8)
+            RankingZoneStat(rankingText(R.string.zone_paint), s.fets_pos_8, s.tirs_pos_8)
         )
     } else {
         listOf(
-            RankingZoneStat("Poste alt dreta", s.fets_pos_4, s.tirs_pos_4),
-            RankingZoneStat("Poste alt esquerra", s.fets_pos_5, s.tirs_pos_5),
-            RankingZoneStat("Poste baix dreta", s.fets_pos_7, s.tirs_pos_7),
-            RankingZoneStat("Ampolla", s.fets_pos_8, s.tirs_pos_8),
-            RankingZoneStat("Poste baix esquerra", s.fets_pos_9, s.tirs_pos_9)
+            RankingZoneStat(rankingText(R.string.zone_high_post_right), s.fets_pos_4, s.tirs_pos_4),
+            RankingZoneStat(rankingText(R.string.zone_high_post_left), s.fets_pos_5, s.tirs_pos_5),
+            RankingZoneStat(rankingText(R.string.zone_low_post_right), s.fets_pos_7, s.tirs_pos_7),
+            RankingZoneStat(rankingText(R.string.zone_paint), s.fets_pos_8, s.tirs_pos_8),
+            RankingZoneStat(rankingText(R.string.zone_low_post_left), s.fets_pos_9, s.tirs_pos_9)
         )
     }.filter { it.attempted > 0 }
 
@@ -2292,23 +2320,23 @@ private fun rankingBestZoneT3Label(
 ): String {
     val zones = if (rankingIsBaseCourt(tipusPista)) {
         listOf(
-            RankingZoneStat("45 dreta", s.fets_pos_1, s.tirs_pos_1),
-            RankingZoneStat("Mig", s.fets_pos_2, s.tirs_pos_2),
-            RankingZoneStat("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
-            RankingZoneStat("Triple alt dreta", s.fets_pos_4, s.tirs_pos_4),
-            RankingZoneStat("Triple alt esquerra", s.fets_pos_5, s.tirs_pos_5),
-            RankingZoneStat("Triple baix dreta", s.fets_pos_7, s.tirs_pos_7),
-            RankingZoneStat("Triple baix esquerra", s.fets_pos_9, s.tirs_pos_9),
-            RankingZoneStat("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
-            RankingZoneStat("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
+            RankingZoneStat(rankingText(R.string.zone_three_45_right), s.fets_pos_1, s.tirs_pos_1),
+            RankingZoneStat(rankingText(R.string.zone_three_middle), s.fets_pos_2, s.tirs_pos_2),
+            RankingZoneStat(rankingText(R.string.zone_three_45_left), s.fets_pos_3, s.tirs_pos_3),
+            RankingZoneStat(rankingText(R.string.zone_three_high_right), s.fets_pos_4, s.tirs_pos_4),
+            RankingZoneStat(rankingText(R.string.zone_three_high_left), s.fets_pos_5, s.tirs_pos_5),
+            RankingZoneStat(rankingText(R.string.zone_three_low_right), s.fets_pos_7, s.tirs_pos_7),
+            RankingZoneStat(rankingText(R.string.zone_three_low_left), s.fets_pos_9, s.tirs_pos_9),
+            RankingZoneStat(rankingText(R.string.zone_three_corner_right), s.fets_pos_10, s.tirs_pos_10),
+            RankingZoneStat(rankingText(R.string.zone_three_corner_left), s.fets_pos_11, s.tirs_pos_11)
         )
     } else {
         listOf(
-            RankingZoneStat("45 dreta", s.fets_pos_1, s.tirs_pos_1),
-            RankingZoneStat("Mig", s.fets_pos_2, s.tirs_pos_2),
-            RankingZoneStat("45 esquerra", s.fets_pos_3, s.tirs_pos_3),
-            RankingZoneStat("Cantonada dreta", s.fets_pos_10, s.tirs_pos_10),
-            RankingZoneStat("Cantonada esquerra", s.fets_pos_11, s.tirs_pos_11)
+            RankingZoneStat(rankingText(R.string.zone_three_45_right), s.fets_pos_1, s.tirs_pos_1),
+            RankingZoneStat(rankingText(R.string.zone_three_middle), s.fets_pos_2, s.tirs_pos_2),
+            RankingZoneStat(rankingText(R.string.zone_three_45_left), s.fets_pos_3, s.tirs_pos_3),
+            RankingZoneStat(rankingText(R.string.zone_three_corner_right), s.fets_pos_10, s.tirs_pos_10),
+            RankingZoneStat(rankingText(R.string.zone_three_corner_left), s.fets_pos_11, s.tirs_pos_11)
         )
     }.filter { it.attempted > 0 }
 
@@ -2322,16 +2350,16 @@ private fun rankingBestZoneT3Label(
 private fun rankingBestSideLabel(rightPct: Float?, leftPct: Float?): String {
     return when {
         rightPct == null && leftPct == null -> "-"
-        rightPct != null && leftPct == null -> "Dreta"
-        rightPct == null && leftPct != null -> "Esquerra"
+        rightPct != null && leftPct == null -> rankingText(R.string.right)
+        rightPct == null && leftPct != null -> rankingText(R.string.left)
         else -> {
             val right = rightPct ?: 0f
             val left = leftPct ?: 0f
 
             when {
-                right > left -> "Dreta"
-                left > right -> "Esquerra"
-                else -> "Igual"
+                right > left -> rankingText(R.string.right)
+                left > right -> rankingText(R.string.left)
+                else -> rankingText(R.string.equal)
             }
         }
     }

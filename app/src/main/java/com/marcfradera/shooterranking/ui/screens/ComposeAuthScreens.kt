@@ -42,6 +42,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.localization.AppLanguageManager
 import com.marcfradera.shooterranking.ui.vm.AuthViewModel
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 
 @Composable
 fun WelcomeScreen(onLogin: () -> Unit, onSignup: () -> Unit) {
@@ -173,6 +188,370 @@ fun LoginScreen(onBack: () -> Unit, onLoggedIn: () -> Unit) {
     }
 }
 
+
+@Composable
+private fun LanguageFlagDropdown() {
+    val context = LocalContext.current
+    var expanded by remember { mutableStateOf(false) }
+
+    val currentTag =
+        AppLanguageManager.currentLanguageTag(context)
+
+    Box {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier
+                .width(52.dp)
+                .height(38.dp),
+            contentPadding = PaddingValues(
+                horizontal = 8.dp,
+                vertical = 5.dp
+            )
+        ) {
+            LanguageFlag(
+                languageTag = currentTag
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            }
+        ) {
+            AppLanguageManager.supportedLanguages
+                .forEach { language ->
+                    val description =
+                        when (language.tag) {
+                            "ca" ->
+                                stringResource(
+                                    R.string.language_catalan
+                                )
+
+                            "en" ->
+                                stringResource(
+                                    R.string.language_english
+                                )
+
+                            "fr" ->
+                                stringResource(
+                                    R.string.language_french
+                                )
+
+                            else ->
+                                stringResource(
+                                    R.string.language_spanish
+                                )
+                        }
+
+                    DropdownMenuItem(
+                        text = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .semantics {
+                                        contentDescription =
+                                            description
+                                    },
+                                contentAlignment =
+                                    Alignment.Center
+                            ) {
+                                LanguageFlag(
+                                    languageTag =
+                                        language.tag
+                                )
+                            }
+                        },
+                        onClick = {
+                            expanded = false
+
+                            if (
+                                language.tag !=
+                                AppLanguageManager
+                                    .currentLanguageTag(
+                                        context
+                                    )
+                            ) {
+                                AppLanguageManager
+                                    .setLanguage(
+                                        language.tag
+                                    )
+                            }
+                        }
+                    )
+                }
+        }
+    }
+}
+
+@Composable
+private fun LanguageFlag(
+    languageTag: String
+) {
+    Canvas(
+        modifier = Modifier
+            .width(30.dp)
+            .height(20.dp)
+    ) {
+        when (languageTag) {
+            "ca" -> {
+                // Senyera: 9 franges horitzontals.
+                drawRect(
+                    color = Color(0xFFFFD54F)
+                )
+
+                val stripeHeight =
+                    size.height / 9f
+
+                for (stripe in listOf(1, 3, 5, 7)) {
+                    drawRect(
+                        color = Color(0xFFD32F2F),
+                        topLeft = Offset(
+                            0f,
+                            stripeHeight * stripe
+                        ),
+                        size = Size(
+                            size.width,
+                            stripeHeight
+                        )
+                    )
+                }
+            }
+
+            "en" -> {
+                // Union Jack simplificada però recognoscible.
+                val blue =
+                    Color(0xFF012169)
+                val white =
+                    Color.White
+                val red =
+                    Color(0xFFC8102E)
+
+                drawRect(blue)
+
+                val diagonalWhite =
+                    size.height * 0.20f
+                val diagonalRed =
+                    size.height * 0.09f
+
+                drawLine(
+                    white,
+                    Offset(0f, 0f),
+                    Offset(
+                        size.width,
+                        size.height
+                    ),
+                    strokeWidth =
+                        diagonalWhite
+                )
+                drawLine(
+                    white,
+                    Offset(
+                        size.width,
+                        0f
+                    ),
+                    Offset(
+                        0f,
+                        size.height
+                    ),
+                    strokeWidth =
+                        diagonalWhite
+                )
+
+                drawLine(
+                    red,
+                    Offset(0f, 0f),
+                    Offset(
+                        size.width,
+                        size.height
+                    ),
+                    strokeWidth =
+                        diagonalRed
+                )
+                drawLine(
+                    red,
+                    Offset(
+                        size.width,
+                        0f
+                    ),
+                    Offset(
+                        0f,
+                        size.height
+                    ),
+                    strokeWidth =
+                        diagonalRed
+                )
+
+                drawRect(
+                    white,
+                    topLeft = Offset(
+                        size.width * 0.40f,
+                        0f
+                    ),
+                    size = Size(
+                        size.width * 0.20f,
+                        size.height
+                    )
+                )
+                drawRect(
+                    white,
+                    topLeft = Offset(
+                        0f,
+                        size.height * 0.34f
+                    ),
+                    size = Size(
+                        size.width,
+                        size.height * 0.32f
+                    )
+                )
+
+                drawRect(
+                    red,
+                    topLeft = Offset(
+                        size.width * 0.455f,
+                        0f
+                    ),
+                    size = Size(
+                        size.width * 0.09f,
+                        size.height
+                    )
+                )
+                drawRect(
+                    red,
+                    topLeft = Offset(
+                        0f,
+                        size.height * 0.42f
+                    ),
+                    size = Size(
+                        size.width,
+                        size.height * 0.16f
+                    )
+                )
+            }
+
+            "fr" -> {
+                val third =
+                    size.width / 3f
+
+                drawRect(
+                    Color(0xFF0055A4),
+                    size = Size(
+                        third,
+                        size.height
+                    )
+                )
+                drawRect(
+                    Color.White,
+                    topLeft = Offset(
+                        third,
+                        0f
+                    ),
+                    size = Size(
+                        third,
+                        size.height
+                    )
+                )
+                drawRect(
+                    Color(0xFFEF4135),
+                    topLeft = Offset(
+                        third * 2f,
+                        0f
+                    ),
+                    size = Size(
+                        third,
+                        size.height
+                    )
+                )
+            }
+
+            else -> {
+                // Espanya.
+                drawRect(
+                    Color(0xFFAA151B)
+                )
+
+                drawRect(
+                    Color(0xFFF1BF00),
+                    topLeft = Offset(
+                        0f,
+                        size.height * 0.25f
+                    ),
+                    size = Size(
+                        size.width,
+                        size.height * 0.50f
+                    )
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun LegalCheckboxRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    prefix: String,
+    linkText: String,
+    onLinkClick: () -> Unit
+) {
+    val linkColor = MaterialTheme.colorScheme.primary
+
+    val annotatedText = buildAnnotatedString {
+        append(prefix)
+        append(" ")
+
+        pushStringAnnotation(
+            tag = "LEGAL_LINK",
+            annotation = "LEGAL_LINK"
+        )
+
+        withStyle(
+            style = SpanStyle(
+                color = linkColor,
+                textDecoration = TextDecoration.Underline,
+                fontWeight = FontWeight.Medium
+            )
+        ) {
+            append(linkText)
+        }
+
+        pop()
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+
+        ClickableText(
+            text = annotatedText,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            onClick = { offset ->
+                val linkClicked = annotatedText
+                    .getStringAnnotations(
+                        tag = "LEGAL_LINK",
+                        start = offset,
+                        end = offset
+                    )
+                    .isNotEmpty()
+
+                if (linkClicked) {
+                    onLinkClick()
+                }
+            }
+        )
+    }
+}
+
+
 @Composable
 fun SignupScreen(onBack: () -> Unit, onSignedUp: () -> Unit) {
     val vm: AuthViewModel = viewModel()
@@ -240,34 +619,34 @@ fun SignupScreen(onBack: () -> Unit, onSignedUp: () -> Unit) {
         )
 
         Spacer(Modifier.height(16.dp))
-        OutlinedButton(
-            onClick = { showTerms = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.read_terms), textAlign = TextAlign.Center, maxLines = 2)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = termsAccepted,
-                onCheckedChange = { termsAccepted = it; localError = null }
-            )
-            Text(stringResource(R.string.accept_terms_checkbox), modifier = Modifier.weight(1f))
-        }
+
+        LegalCheckboxRow(
+            checked = termsAccepted,
+            onCheckedChange = {
+                termsAccepted = it
+                localError = null
+            },
+            prefix = stringResource(R.string.terms_read_prefix),
+            linkText = stringResource(R.string.terms_and_conditions),
+            onLinkClick = {
+                showTerms = true
+            }
+        )
 
         Spacer(Modifier.height(4.dp))
-        OutlinedButton(
-            onClick = { showPrivacy = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.read_privacy_policy), textAlign = TextAlign.Center, maxLines = 2)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = privacyAcknowledged,
-                onCheckedChange = { privacyAcknowledged = it; localError = null }
-            )
-            Text(stringResource(R.string.privacy_read_checkbox), modifier = Modifier.weight(1f))
-        }
+
+        LegalCheckboxRow(
+            checked = privacyAcknowledged,
+            onCheckedChange = {
+                privacyAcknowledged = it
+                localError = null
+            },
+            prefix = stringResource(R.string.privacy_read_prefix),
+            linkText = stringResource(R.string.privacy_policy),
+            onLinkClick = {
+                showPrivacy = true
+            }
+        )
 
         Spacer(Modifier.height(12.dp))
         Button(

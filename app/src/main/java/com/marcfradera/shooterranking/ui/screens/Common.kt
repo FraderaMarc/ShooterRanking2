@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -31,14 +33,23 @@ fun CenteredScaffold(
     titleContent: (@Composable () -> Unit)? = null,
     showSettings: Boolean = true,
     scrollableContent: Boolean = false,
+    navigationExtra: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
     val authVm: AuthViewModel = viewModel()
 
     fun restartApp() {
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-        launchIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        val launchIntent =
+            context.packageManager.getLaunchIntentForPackage(
+                context.packageName
+            )
+
+        launchIntent?.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_CLEAR_TASK
+        )
+
         if (launchIntent != null) {
             context.startActivity(launchIntent)
         }
@@ -62,9 +73,17 @@ fun CenteredScaffold(
                     }
                 },
                 navigationIcon = {
-                    if (onBack != null) {
-                        IconButton(onClick = onBack) {
-                            Text("←")
+                    if (onBack != null || navigationExtra != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (onBack != null) {
+                                IconButton(onClick = onBack) {
+                                    Text("←")
+                                }
+                            }
+
+                            navigationExtra?.invoke()
                         }
                     }
                 },
@@ -73,7 +92,9 @@ fun CenteredScaffold(
                         IconButton(
                             onClick = {
                                 AppSettingsDialogs.showSettings(context) {
-                                    authVm.signOut { restartApp() }
+                                    authVm.signOut {
+                                        restartApp()
+                                    }
                                 }
                             }
                         ) {
@@ -84,14 +105,23 @@ fun CenteredScaffold(
             )
         }
     ) { padding ->
-        val contentModifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(padding)
-            .padding(16.dp)
-            .let { base ->
-                if (scrollableContent) base.verticalScroll(rememberScrollState()) else base
-            }
+        val contentModifier =
+            Modifier
+                .fillMaxSize()
+                .background(
+                    MaterialTheme.colorScheme.background
+                )
+                .padding(padding)
+                .padding(16.dp)
+                .let { base ->
+                    if (scrollableContent) {
+                        base.verticalScroll(
+                            rememberScrollState()
+                        )
+                    } else {
+                        base
+                    }
+                }
 
         Column(
             modifier = contentModifier,
