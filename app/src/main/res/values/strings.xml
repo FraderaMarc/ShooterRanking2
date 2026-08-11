@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ShooterRanking2</string>
+    <string name="app_name">Shooter Ranking</string>
     <string name="back">Volver</string>
     <string name="settings">Configuración</string>
     <string name="change_language">Cambiar idioma</string>
@@ -228,4 +228,15 @@
     <string name="personal_player_saving">Guardando…</string>
     <string name="personal_player_auth_required">Debes iniciar sesión para utilizar tu perfil de jugador.</string>
     <string name="email_not_verified_yet">El correo todavía no está verificado. Confírmalo desde el enlace que te hemos enviado.</string>
+    <string name="view_total_shot_map">Ver mapa de tiro</string>
+    <string name="total_shot_map_title">Mapa de tiro total</string>
+    <string name="total_shot_map_all_sessions">Porcentajes acumulados de todas las sesiones</string>
+    <string name="share_shot_map">Compartir</string>
+    <string name="share_shot_map_chooser">Compartir mapa de tiro</string>
+    <string name="total_shot_statistics">Estadísticas totales</string>
+    <string name="error_share_shot_map">No se ha podido compartir el mapa de tiro.</string>
+    <string name="jersey_label">Dorsal %1$s</string>
+    <string name="total_shot_table_type">Type</string>
+    <string name="total_shot_table_percentage">%</string>
+    <string name="total_shot_table_made_attempted">Made/Attempted</string>
 </resources>

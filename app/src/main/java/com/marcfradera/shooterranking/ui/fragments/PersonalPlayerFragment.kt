@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.marcfradera.shooterranking.R
@@ -79,7 +80,17 @@ class PersonalPlayerFragment : BaseComposeFragment() {
                             nomJugador = profile.nom_jugador,
                             onBack = { findNavController().navigateUp() },
                             forcedTipusPista = profile.tipus_pista,
-                            topContent = tabs
+                            topContent = tabs,
+                            onOpenTotalShotMap = {
+                                findNavController().navigate(
+                                    R.id.action_personal_player_to_total_shot_map,
+                                    bundleOf(
+                                        TotalShotMapFragment.ARG_PLAYER_ID to profile.id_jugador,
+                                        TotalShotMapFragment.ARG_PLAYER_NAME to profile.nom_jugador,
+                                        TotalShotMapFragment.ARG_COURT_TYPE to profile.tipus_pista
+                                    )
+                                )
+                            }
                         )
                     }
 

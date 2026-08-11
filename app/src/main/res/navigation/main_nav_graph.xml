@@ -31,7 +31,14 @@
         <action android:id="@+id/action_home_to_personal_player" app:destination="@id/personalPlayerFragment" />
     </fragment>
 
-    <fragment android:id="@+id/personalPlayerFragment" android:name="com.marcfradera.shooterranking.ui.fragments.PersonalPlayerFragment" android:label="@string/home_player" />
+    <fragment
+        android:id="@+id/personalPlayerFragment"
+        android:name="com.marcfradera.shooterranking.ui.fragments.PersonalPlayerFragment"
+        android:label="@string/home_player">
+        <action
+            android:id="@+id/action_personal_player_to_total_shot_map"
+            app:destination="@id/totalShotMapFragment" />
+    </fragment>
 
     <fragment android:id="@+id/temporadesFragment" android:name="com.marcfradera.shooterranking.ui.fragments.TemporadesFragment" android:label="@string/seasons">
         <action android:id="@+id/action_temporades_to_equips" app:destination="@id/equipsFragment" />
@@ -46,7 +53,19 @@
         <action android:id="@+id/action_ranking_to_shotmap" app:destination="@id/shotMapFragment" />
     </fragment>
 
-    <fragment android:id="@+id/playerStatsFragment" android:name="com.marcfradera.shooterranking.ui.fragments.PlayerStatsFragment" android:label="@string/statistics" />
+    <fragment
+        android:id="@+id/playerStatsFragment"
+        android:name="com.marcfradera.shooterranking.ui.fragments.PlayerStatsFragment"
+        android:label="@string/statistics">
+        <action
+            android:id="@+id/action_player_stats_to_total_shot_map"
+            app:destination="@id/totalShotMapFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/totalShotMapFragment"
+        android:name="com.marcfradera.shooterranking.ui.fragments.TotalShotMapFragment"
+        android:label="@string/total_shot_map_title" />
     <fragment android:id="@+id/shotMapFragment" android:name="com.marcfradera.shooterranking.ui.fragments.ShotMapFragment" android:label="@string/shot_map" />
 
 </navigation>

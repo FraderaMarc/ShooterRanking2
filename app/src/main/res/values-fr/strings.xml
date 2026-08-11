@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ShooterRanking2</string>
+    <string name="app_name">Shooter Ranking</string>
     <string name="back">Retour</string>
     <string name="settings">Paramètres</string>
     <string name="change_language">Changer de langue</string>
@@ -228,4 +228,15 @@
     <string name="personal_player_saving">Enregistrement…</string>
     <string name="personal_player_auth_required">Vous devez vous connecter pour utiliser votre profil joueur.</string>
     <string name="email_not_verified_yet">Votre adresse e-mail n’est pas encore vérifiée. Confirmez-la à l’aide du lien que nous vous avons envoyé.</string>
+    <string name="view_total_shot_map">Voir la carte de tirs</string>
+    <string name="total_shot_map_title">Carte de tirs totale</string>
+    <string name="total_shot_map_all_sessions">Pourcentages cumulés sur toutes les séances</string>
+    <string name="share_shot_map">Partager</string>
+    <string name="share_shot_map_chooser">Partager la carte de tirs</string>
+    <string name="total_shot_statistics">Statistiques totales</string>
+    <string name="error_share_shot_map">Impossible de partager la carte de tirs.</string>
+    <string name="jersey_label">N° %1$s</string>
+    <string name="total_shot_table_type">Type</string>
+    <string name="total_shot_table_percentage">%</string>
+    <string name="total_shot_table_made_attempted">Réuss./Tent.</string>
 </resources>

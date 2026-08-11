@@ -228,4 +228,15 @@
     <string name="personal_player_saving">Desant…</string>
     <string name="personal_player_auth_required">Has d’iniciar sessió per utilitzar el teu perfil de jugador.</string>
     <string name="email_not_verified_yet">El correu encara no està verificat. Confirma’l des de l’enllaç que t’hem enviat.</string>
+    <string name="view_total_shot_map">Veure mapa de tir</string>
+    <string name="total_shot_map_title">Mapa de tir total</string>
+    <string name="total_shot_map_all_sessions">Percentatges acumulats de totes les sessions</string>
+    <string name="share_shot_map">Compartir</string>
+    <string name="share_shot_map_chooser">Compartir mapa de tir</string>
+    <string name="total_shot_statistics">Estadístiques totals</string>
+    <string name="error_share_shot_map">No s’ha pogut compartir el mapa de tir.</string>
+    <string name="jersey_label">Dorsal %1$s</string>
+    <string name="total_shot_table_type">Tipus</string>
+    <string name="total_shot_table_percentage">%</string>
+    <string name="total_shot_table_made_attempted">Enc./Int.</string>
 </resources>

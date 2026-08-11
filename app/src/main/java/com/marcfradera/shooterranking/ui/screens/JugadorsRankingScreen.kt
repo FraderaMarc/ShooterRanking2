@@ -126,7 +126,8 @@ fun PlayerStatsScreen(
     nomJugador: String,
     onBack: () -> Unit,
     forcedTipusPista: String? = null,
-    topContent: (@Composable () -> Unit)? = null
+    topContent: (@Composable () -> Unit)? = null,
+    onOpenTotalShotMap: (() -> Unit)? = null
 ) {
     val vm: ShotSessionViewModel = viewModel()
     var selectedFilter by remember { mutableStateOf(StatsFilter.ALL) }
@@ -314,6 +315,17 @@ fun PlayerStatsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(statsText(R.string.export_statistics_pdf))
+                    }
+
+                    if (onOpenTotalShotMap != null) {
+                        Spacer(Modifier.height(12.dp))
+
+                        Button(
+                            onClick = onOpenTotalShotMap,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(statsText(R.string.view_total_shot_map))
+                        }
                     }
 
                     Spacer(Modifier.height(24.dp))

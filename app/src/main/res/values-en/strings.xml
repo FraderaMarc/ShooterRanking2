@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ShooterRanking2</string>
+    <string name="app_name">Shooter Ranking</string>
     <string name="back">Back</string>
     <string name="settings">Settings</string>
     <string name="change_language">Change language</string>
@@ -228,4 +228,15 @@
     <string name="personal_player_saving">Saving…</string>
     <string name="personal_player_auth_required">You must sign in to use your player profile.</string>
     <string name="email_not_verified_yet">Your email is not verified yet. Confirm it using the link we sent you.</string>
+    <string name="view_total_shot_map">View shot map</string>
+    <string name="total_shot_map_title">Total shot map</string>
+    <string name="total_shot_map_all_sessions">Percentages accumulated across all sessions</string>
+    <string name="share_shot_map">Share</string>
+    <string name="share_shot_map_chooser">Share shot map</string>
+    <string name="total_shot_statistics">Total statistics</string>
+    <string name="error_share_shot_map">The shot map could not be shared.</string>
+    <string name="jersey_label">No. %1$s</string>
+    <string name="total_shot_table_type">Type</string>
+    <string name="total_shot_table_percentage">%</string>
+    <string name="total_shot_table_made_attempted">Made/Att.</string>
 </resources>
