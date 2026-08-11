@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -116,7 +117,7 @@ private data class PlayerPdfProZoneLayer(
     val path: AndroidPath
 )
 
-private val SessionStickyColumnWidth = 90.dp
+private val SessionStickyColumnWidth = 180.dp
 private val BestZoneColumnWidth = 180.dp
 
 @Composable
@@ -633,12 +634,24 @@ private fun SessionTableStickyCell(
     text: String,
     isTotal: Boolean
 ) {
-    DataCell(
-        text = text,
-        width = SessionStickyColumnWidth,
-        weight = if (isTotal) FontWeight.Bold else FontWeight.Normal,
-        isTotal = isTotal
-    )
+    Box(
+        modifier = Modifier
+            .width(SessionStickyColumnWidth)
+            .border(1.dp, Color(0xFF8A8A8A))
+            .background(if (isTotal) Color(0xFFF0F7FF) else Color.White)
+            .padding(vertical = 8.dp, horizontal = 6.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = text,
+            fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Normal,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }
 
 @Composable
@@ -727,14 +740,6 @@ private fun DataCell(
     }
 }
 
-private fun Sessio.statsSessionDisplayName(): String {
-    val customName = nom_sessio.trim()
-
-    return customName.ifBlank {
-        statsText(R.string.session_number, num_sessio)
-    }
-}
-
 private fun Sessio.toTableRow(tipusPista: String): SessionTableRow {
     val tlMade = fets_pos_6
     val tlAttempted = tirs_pos_6
@@ -758,7 +763,7 @@ private fun Sessio.toTableRow(tipusPista: String): SessionTableRow {
     val leftPct = playerPctOrNull(leftMade, leftAttempted)
 
     return SessionTableRow(
-        label = statsSessionDisplayName(),
+        label = statsText(R.string.session_number, num_sessio),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
@@ -1185,7 +1190,7 @@ private fun drawPlayerPdfSinglePage(
 
     val allRows = if (totalRow != null) pageRows + totalRow else pageRows
     val columns = listOf(
-        PlayerPdfColumn(statsText(R.string.session_header), 85f),
+        PlayerPdfColumn(statsText(R.string.session_header), 180f),
         PlayerPdfColumn(statsText(R.string.free_throw_short), 85f),
         PlayerPdfColumn(statsText(R.string.free_throw_percent_short), 70f),
         PlayerPdfColumn(statsText(R.string.two_point_short), 85f),
@@ -1424,6 +1429,46 @@ private fun drawPlayerPdfTextFitted(
     paint.textSize = originalSize
 }
 
+private fun drawPlayerPdfSessionNameFitted(
+    canvas: android.graphics.Canvas,
+    text: String,
+    rect: RectF,
+    paint: Paint,
+    horizontalPadding: Float = 4f,
+    minTextSize: Float = 9f
+) {
+    val originalSize = paint.textSize
+    val availableWidth = (rect.width() - horizontalPadding * 2f).coerceAtLeast(1f)
+
+    while (paint.measureText(text) > availableWidth && paint.textSize > minTextSize) {
+        paint.textSize -= 0.5f
+    }
+
+    var fittedText = text
+
+    if (paint.measureText(fittedText) > availableWidth) {
+        val ellipsis = "…"
+
+        while (
+            fittedText.length > 1 &&
+            paint.measureText(fittedText.dropLast(1).trimEnd() + ellipsis) > availableWidth
+        ) {
+            fittedText = fittedText.dropLast(1)
+        }
+
+        fittedText = fittedText.trimEnd()
+        fittedText = if (fittedText.length > 1) {
+            fittedText.dropLast(1).trimEnd() + ellipsis
+        } else {
+            ellipsis
+        }
+    }
+
+    val textY = rect.centerY() - (paint.descent() + paint.ascent()) / 2f
+    canvas.drawText(fittedText, rect.left + horizontalPadding, textY, paint)
+    paint.textSize = originalSize
+}
+
 private fun drawPlayerPdfTableHeader(
     canvas: android.graphics.Canvas,
     startX: Float,
@@ -1508,7 +1553,13 @@ private fun drawPlayerPdfStatsRow(
         val rect = RectF(x, startY, x + columns[index].width, startY + rowHeight)
         canvas.drawRect(rect, bgPaint)
         canvas.drawRect(rect, borderPaint)
-        drawPlayerPdfTextFitted(canvas, value, rect, textPaint)
+
+        if (index == 0 && !isTotal) {
+            drawPlayerPdfSessionNameFitted(canvas, value, rect, textPaint)
+        } else {
+            drawPlayerPdfTextFitted(canvas, value, rect, textPaint)
+        }
+
         x += columns[index].width
     }
 }

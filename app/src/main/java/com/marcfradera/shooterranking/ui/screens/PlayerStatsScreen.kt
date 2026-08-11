@@ -1141,19 +1141,19 @@ private fun drawTeamPlayerPages(
     )
 
     val tripleData = orderedSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingThreePointPct(tipusPista))
+        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingThreePointPct(tipusPista))
     }
     val freeThrowData = orderedSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingFreeThrowPct())
+        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingFreeThrowPct())
     }
     val twoPointData = orderedSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingTwoPointPct(tipusPista))
+        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingTwoPointPct(tipusPista))
     }
 
     val pageWidth = 1650
     val pageHeight = 1000
     val columns = listOf(
-        RankingPdfColumn(rankingText(R.string.session_header), 85f),
+        RankingPdfColumn(rankingText(R.string.session_header), 180f),
         RankingPdfColumn(rankingText(R.string.free_throw_short), 85f),
         RankingPdfColumn(rankingText(R.string.free_throw_percent_short), 70f),
         RankingPdfColumn(rankingText(R.string.two_point_short), 85f),
@@ -1415,6 +1415,46 @@ private fun drawRankingPdfTextFitted(
     paint.textSize = originalSize
 }
 
+private fun drawRankingPdfSessionNameFitted(
+    canvas: android.graphics.Canvas,
+    text: String,
+    rect: RectF,
+    paint: Paint,
+    horizontalPadding: Float = 4f,
+    minTextSize: Float = 9f
+) {
+    val originalSize = paint.textSize
+    val availableWidth = (rect.width() - horizontalPadding * 2f).coerceAtLeast(1f)
+
+    while (paint.measureText(text) > availableWidth && paint.textSize > minTextSize) {
+        paint.textSize -= 0.5f
+    }
+
+    var fittedText = text
+
+    if (paint.measureText(fittedText) > availableWidth) {
+        val ellipsis = "…"
+
+        while (
+            fittedText.length > 1 &&
+            paint.measureText(fittedText.dropLast(1).trimEnd() + ellipsis) > availableWidth
+        ) {
+            fittedText = fittedText.dropLast(1)
+        }
+
+        fittedText = fittedText.trimEnd()
+        fittedText = if (fittedText.length > 1) {
+            fittedText.dropLast(1).trimEnd() + ellipsis
+        } else {
+            ellipsis
+        }
+    }
+
+    val textY = rect.centerY() - (paint.descent() + paint.ascent()) / 2f
+    canvas.drawText(fittedText, rect.left + horizontalPadding, textY, paint)
+    paint.textSize = originalSize
+}
+
 private fun drawRankingPdfTableHeader(
     canvas: android.graphics.Canvas,
     startX: Float,
@@ -1529,14 +1569,6 @@ private fun drawTeamExportRow(
     }
 }
 
-private fun Sessio.rankingSessionDisplayName(): String {
-    val customName = nom_sessio.trim()
-
-    return customName.ifBlank {
-        rankingText(R.string.session_number, num_sessio)
-    }
-}
-
 private fun Sessio.toTeamPdfPlayerRow(tipusPista: String): TeamPdfPlayerRow {
     val tlMade = fets_pos_6
     val tlAttempted = tirs_pos_6
@@ -1560,7 +1592,7 @@ private fun Sessio.toTeamPdfPlayerRow(tipusPista: String): TeamPdfPlayerRow {
     val leftPct = rankingPctOrNull(leftMade, leftAttempted)
 
     return TeamPdfPlayerRow(
-        label = rankingSessionDisplayName(),
+        label = rankingText(R.string.session_number, num_sessio),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
@@ -1678,7 +1710,12 @@ private fun drawTeamPdfPlayerStatsRow(
 
         canvas.drawRect(rect, bgPaint)
         canvas.drawRect(rect, borderPaint)
-        drawRankingPdfTextFitted(canvas, value, rect, textPaint)
+
+        if (index == 0 && !isTotal) {
+            drawRankingPdfSessionNameFitted(canvas, value, rect, textPaint)
+        } else {
+            drawRankingPdfTextFitted(canvas, value, rect, textPaint)
+        }
 
         x += columns[index].width
     }
