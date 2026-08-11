@@ -782,13 +782,13 @@ private fun exportAllPlayersStatsPdfAndShare(
     val teamSessions = buildTeamSessionAggregates(players)
 
     val tripleData = teamSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingThreePointPct(tipusPista))
+        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingThreePointPct(tipusPista))
     }
     val freeThrowData = teamSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingFreeThrowPct())
+        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingFreeThrowPct())
     }
     val twoPointData = teamSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingTwoPointPct(tipusPista))
+        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingTwoPointPct(tipusPista))
     }
 
     val document = PdfDocument()
@@ -1141,13 +1141,13 @@ private fun drawTeamPlayerPages(
     )
 
     val tripleData = orderedSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingThreePointPct(tipusPista))
+        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingThreePointPct(tipusPista))
     }
     val freeThrowData = orderedSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingFreeThrowPct())
+        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingFreeThrowPct())
     }
     val twoPointData = orderedSessions.mapIndexed { index, s ->
-        TeamPdfProgressPoint(index, s.num_sessio.toString(), s.rankingTwoPointPct(tipusPista))
+        TeamPdfProgressPoint(index, s.rankingSessionDisplayName(), s.rankingTwoPointPct(tipusPista))
     }
 
     val pageWidth = 1650
@@ -1569,6 +1569,14 @@ private fun drawTeamExportRow(
     }
 }
 
+private fun Sessio.rankingSessionDisplayName(): String {
+    val customName = nom_sessio.trim()
+
+    return customName.ifBlank {
+        rankingText(R.string.session_number, num_sessio)
+    }
+}
+
 private fun Sessio.toTeamPdfPlayerRow(tipusPista: String): TeamPdfPlayerRow {
     val tlMade = fets_pos_6
     val tlAttempted = tirs_pos_6
@@ -1592,7 +1600,7 @@ private fun Sessio.toTeamPdfPlayerRow(tipusPista: String): TeamPdfPlayerRow {
     val leftPct = rankingPctOrNull(leftMade, leftAttempted)
 
     return TeamPdfPlayerRow(
-        label = rankingText(R.string.session_number, num_sessio),
+        label = rankingSessionDisplayName(),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,
