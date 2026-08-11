@@ -6,7 +6,6 @@ import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.ui.screens.SignupScreen
 
 class SignupFragment : BaseComposeFragment() {
-
     @Composable
     override fun Render() {
         SignupScreen(

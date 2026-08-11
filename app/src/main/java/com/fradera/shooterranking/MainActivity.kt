@@ -34,7 +34,6 @@ class MainActivity : AppCompatActivity() {
         if (!binding.adContainer.isAttachedToWindow) return@Runnable
         if (binding.adContainer.visibility != View.VISIBLE) return@Runnable
         if (!adsInitialized) return@Runnable
-
         loadBanner()
     }
 
@@ -73,10 +72,8 @@ class MainActivity : AppCompatActivity() {
         val startDestination = when {
             authViewModel.isLoggedIn && authViewModel.emailConfirmed ->
                 R.id.temporadesFragment
-
             authViewModel.isLoggedIn && !authViewModel.emailConfirmed ->
                 R.id.verifyFragment
-
             else ->
                 R.id.welcomeFragment
         }
@@ -95,7 +92,6 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val navigatedBack = navController.popBackStack()
-
                 if (!navigatedBack) {
                     moveTaskToBack(true)
                 }
@@ -128,7 +124,6 @@ class MainActivity : AppCompatActivity() {
         if (!::binding.isInitialized) return
 
         binding.adContainer.removeCallbacks(bannerLoadRunnable)
-
         if (destinationId == null) return
 
         if (destinationId in NO_AD_DESTINATIONS) {
@@ -148,11 +143,10 @@ class MainActivity : AppCompatActivity() {
 
         val bannerAlreadyLoadedForThisDestination =
             adView != null &&
-                    lastLoadedBannerDestinationId == destinationId &&
-                    binding.adContainer.childCount > 0
+                lastLoadedBannerDestinationId == destinationId &&
+                binding.adContainer.childCount > 0
 
         if (bannerAlreadyLoadedForThisDestination) return
-
         binding.adContainer.post(bannerLoadRunnable)
     }
 
@@ -187,7 +181,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             adView = newAdView
-
             binding.adContainer.removeAllViews()
             binding.adContainer.addView(newAdView)
 

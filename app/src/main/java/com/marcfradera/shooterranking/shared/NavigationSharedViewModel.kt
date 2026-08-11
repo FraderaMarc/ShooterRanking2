@@ -14,7 +14,6 @@ data class NavigationSelection(
 )
 
 class NavigationSharedViewModel : ViewModel() {
-
     private val _selection = MutableLiveData(NavigationSelection())
     val selection: LiveData<NavigationSelection> = _selection
 

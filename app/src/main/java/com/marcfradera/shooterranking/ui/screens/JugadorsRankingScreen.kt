@@ -727,6 +727,14 @@ private fun DataCell(
     }
 }
 
+private fun Sessio.statsSessionDisplayName(): String {
+    val customName = nom_sessio.trim()
+
+    return customName.ifBlank {
+        statsText(R.string.session_number, num_sessio)
+    }
+}
+
 private fun Sessio.toTableRow(tipusPista: String): SessionTableRow {
     val tlMade = fets_pos_6
     val tlAttempted = tirs_pos_6
@@ -750,7 +758,7 @@ private fun Sessio.toTableRow(tipusPista: String): SessionTableRow {
     val leftPct = playerPctOrNull(leftMade, leftAttempted)
 
     return SessionTableRow(
-        label = statsText(R.string.session_number, num_sessio),
+        label = statsSessionDisplayName(),
         tlMade = tlMade,
         tlAttempted = tlAttempted,
         t2Made = t2Made,

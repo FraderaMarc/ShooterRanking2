@@ -6,7 +6,6 @@ import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.ui.screens.WelcomeScreenCustom
 
 class WelcomeFragment : BaseComposeFragment() {
-
     @Composable
     override fun Render() {
         WelcomeScreenCustom(
@@ -17,5 +16,5 @@ class WelcomeFragment : BaseComposeFragment() {
                 findNavController().navigate(R.id.action_welcome_to_signup)
             }
         )
-}
+    }
 }

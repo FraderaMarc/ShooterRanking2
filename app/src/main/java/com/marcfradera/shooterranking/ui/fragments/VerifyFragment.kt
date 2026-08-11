@@ -6,7 +6,6 @@ import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.ui.screens.VerifyEmailScreen
 
 class VerifyFragment : BaseComposeFragment() {
-
     @Composable
     override fun Render() {
         VerifyEmailScreen(

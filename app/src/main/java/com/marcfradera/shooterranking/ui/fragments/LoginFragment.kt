@@ -6,7 +6,6 @@ import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.ui.screens.LoginScreen
 
 class LoginFragment : BaseComposeFragment() {
-
     @Composable
     override fun Render() {
         LoginScreen(

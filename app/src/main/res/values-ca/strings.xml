@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">ShooterRanking2</string>
+    <string name="back">Enrere</string>
     <string name="settings">Configuració</string>
     <string name="change_language">Canviar idioma</string>
     <string name="select_language">Selecciona l’idioma</string>
@@ -53,7 +54,7 @@
     <string name="delete_season_question">Vols eliminar la temporada «%1$s»?</string>
     <string name="will_delete_following">S’eliminarà el següent:</string>
     <string name="teams_count">Equips: %1$d</string>
-    <string name="players_count">Jugadores: %1$d</string>
+    <string name="players_count">Jugadors: %1$d</string>
     <string name="total_sessions_count">Sessions totals: %1$d</string>
     <string name="cannot_undo">Aquesta acció no es pot desfer.</string>
     <string name="season_deleted">Temporada eliminada</string>
@@ -65,19 +66,19 @@
     <string name="court_type">Tipus de pista</string>
     <string name="court_type_locked">No es pot canviar el tipus de pista perquè aquest equip ja té sessions de tir registrades.</string>
     <string name="court_base">Base</string>
-    <string name="court_amateur">Amateur</string>
+    <string name="court_amateur">FIBA</string>
     <string name="court_pro">Pro</string>
     <string name="delete_team_question">Vols eliminar l’equip «%1$s»?</string>
     <string name="team_deleted">Equip eliminat</string>
-    <string name="add_player">Afegir jugadora</string>
-    <string name="edit_player">Editar jugadora</string>
-    <string name="delete_player">Eliminar jugadora</string>
+    <string name="add_player">Afegir jugador</string>
+    <string name="edit_player">Editar jugador</string>
+    <string name="delete_player">Eliminar jugador</string>
     <string name="delete_player_question">Vols eliminar %1$s? També s’eliminaran totes les seves sessions de tir.</string>
-    <string name="no_players">Encara no hi ha jugadores.</string>
-    <string name="no_players_in_team">Aquest equip encara no té jugadores.</string>
-    <string name="no_players_to_export">No hi ha jugadores per exportar.</string>
-    <string name="player">Jugadora</string>
-    <string name="player_fallback">Jugadora</string>
+    <string name="no_players">Encara no hi ha jugadors.</string>
+    <string name="no_players_in_team">Aquest equip encara no té jugadors.</string>
+    <string name="no_players_to_export">No hi ha jugadors per exportar.</string>
+    <string name="player">Jugador</string>
+    <string name="player_fallback">Jugador</string>
     <string name="name">Nom</string>
     <string name="jersey_number">Dorsal</string>
     <string name="jersey_number_range">Dorsal (0–100)</string>
@@ -99,7 +100,7 @@
     <string name="filter_three_pointers">Triples</string>
     <string name="filter_two_pointers">Tirs de 2</string>
     <string name="export_team_pdf">Exportar equip a PDF</string>
-    <string name="error_loading_players">Error carregant les jugadores.</string>
+    <string name="error_loading_players">Error carregant els jugadors.</string>
     <string name="new_session">Nova sessió (%1$d)</string>
     <string name="session_number">Sessió %1$d</string>
     <string name="no_saved_sessions">No hi ha sessions guardades.</string>
@@ -129,7 +130,7 @@
     <string name="zone_low_post_left">Poste baix esquerra</string>
     <string name="player_statistics_title">Estadístiques · %1$s</string>
     <string name="error_loading_sessions">Error carregant les sessions.</string>
-    <string name="no_player_sessions">Aquesta jugadora encara no té sessions.</string>
+    <string name="no_player_sessions">Aquest jugador encara no té sessions.</string>
     <string name="progress_chart_by_session">Gràfic de progrés per sessions</string>
     <string name="sessions_table">Taula per sessions</string>
     <string name="export_statistics_pdf">Exportar estadístiques a PDF</string>
@@ -150,9 +151,9 @@
     <string name="global_shot_map">Mapa de tir global</string>
     <string name="sessions_chart">Gràfic de sessions</string>
     <string name="team_statistics">Estadístiques de l’equip</string>
-    <string name="team_chart_and_global_table">Gràfic de sessions i taula global per jugadores</string>
-    <string name="global_players_table">Taula global per jugadores</string>
-    <string name="global_players_table_continued">Taula global per jugadores (continuació)</string>
+    <string name="team_chart_and_global_table">Gràfic de sessions i taula global per jugadors</string>
+    <string name="global_players_table">Taula global per jugadors</string>
+    <string name="global_players_table_continued">Taula global per jugadors (continuació)</string>
     <string name="player_pdf_summary">Gràfic, mapa de tir global i taula per sessions</string>
     <string name="player_pdf_summary_continued">Gràfic, mapa de tir global i taula per sessions (continuació)</string>
     <string name="team_total">TOTAL EQUIP</string>
@@ -182,7 +183,7 @@
     <string name="error_username_exists">Aquest nom d’usuari ja existeix.</string>
     <string name="error_create_season">No s’ha pogut crear la temporada.</string>
     <string name="error_create_team">No s’ha pogut crear l’equip.</string>
-    <string name="error_create_player">No s’ha pogut crear la jugadora.</string>
+    <string name="error_create_player">No s’ha pogut crear el jugador.</string>
     <string name="error_save_session">No s’ha pogut guardar la sessió.</string>
     <string name="error_session_not_found">No s’ha trobat la sessió que s’ha d’eliminar.</string>
     <string name="error_update_season">No s’ha pogut actualitzar la temporada.</string>
@@ -190,7 +191,7 @@
     <string name="error_delete_season">No s’ha pogut eliminar la temporada.</string>
     <string name="error_update_team">No s’ha pogut actualitzar l’equip.</string>
     <string name="error_delete_team">No s’ha pogut eliminar l’equip.</string>
-    <string name="error_delete_player">No s’ha pogut eliminar la jugadora.</string>
+    <string name="error_delete_player">No s’ha pogut eliminar el jugador.</string>
     <string name="error_firebase_init">No s’ha pogut inicialitzar Firebase. Revisa google-services.json.</string>
     <string name="firebase_not_initialized">Firebase no inicialitzat</string>
     <string name="delete_named_session_question">Vols eliminar «%1$s»? Aquesta acció no es pot desfer.</string>

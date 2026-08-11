@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -20,8 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.marcfradera.shooterranking.R
 import com.marcfradera.shooterranking.localization.AppSettingsDialogs
 import com.marcfradera.shooterranking.ui.vm.AuthViewModel
 
@@ -79,7 +84,12 @@ fun CenteredScaffold(
                         ) {
                             if (onBack != null) {
                                 IconButton(onClick = onBack) {
-                                    Text("←")
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_back_sr),
+                                        contentDescription = stringResource(R.string.back),
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
                                 }
                             }
 
@@ -98,7 +108,12 @@ fun CenteredScaffold(
                                 }
                             }
                         ) {
-                            Text("⚙")
+                            Icon(
+                                painter = painterResource(R.drawable.ic_settings_sr),
+                                contentDescription = stringResource(R.string.settings),
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }

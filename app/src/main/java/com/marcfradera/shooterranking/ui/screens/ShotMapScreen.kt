@@ -198,12 +198,12 @@ fun ShotMapScreen(
      */
     val duplicateSessionName =
         activeSession != null &&
-                normalizedEffectiveSessionName.isNotBlank() &&
-                savedSessions.any { saved ->
-                    saved.num_sessio != activeSession.num_sessio &&
-                            normalizeSessionName(shotSessionDisplayName(saved)) ==
-                            normalizedEffectiveSessionName
-                }
+            normalizedEffectiveSessionName.isNotBlank() &&
+            savedSessions.any { saved ->
+                saved.num_sessio != activeSession.num_sessio &&
+                    normalizeSessionName(shotSessionDisplayName(saved)) ==
+                    normalizedEffectiveSessionName
+            }
 
     val nextAvailableSessionNumber =
         (savedSessions.maxOfOrNull { it.num_sessio } ?: 0) + 1
@@ -482,8 +482,8 @@ fun ShotMapScreen(
                             .height(52.dp),
                         enabled =
                             activeSession != null &&
-                                    !isSaving &&
-                                    !duplicateSessionName,
+                                !isSaving &&
+                                !duplicateSessionName,
                         colors = ButtonDefaults.buttonColors(
                             containerColor =
                                 MaterialTheme.colorScheme.primary,
@@ -974,10 +974,10 @@ private fun DrawScope.drawNormalCourtMap(
 
     val arcPaintIntersectionY =
         bigArcCenter.y -
-                sqrt(
-                    (rThree * rThree) -
-                            (dxPaint * dxPaint)
-                )
+            sqrt(
+                (rThree * rThree) -
+                    (dxPaint * dxPaint)
+            )
 
     fun drawZoneFill(zone: Int) {
         val (made, attempted) =
@@ -986,7 +986,7 @@ private fun DrawScope.drawNormalCourtMap(
         val percentage =
             if (attempted > 0) {
                 made.toFloat() /
-                        attempted.toFloat()
+                    attempted.toFloat()
             } else {
                 null
             }
@@ -1073,9 +1073,9 @@ private fun DrawScope.drawNormalCourtMap(
         useCenter = false,
         topLeft = Offset(
             bigArcCenter.x -
-                    rThree,
+                rThree,
             bigArcCenter.y -
-                    rThree
+                rThree
         ),
         size = Size(
             2f * rThree,
@@ -1089,12 +1089,12 @@ private fun DrawScope.drawNormalCourtMap(
         start = Offset(
             w * 0.5f,
             bigArcCenter.y -
-                    rThree
+                rThree
         ),
         end = Offset(
             w * 0.5f,
             freeThrowCenter.y -
-                    rFT
+                rFT
         ),
         strokeWidth =
             strokeWidth
@@ -1107,9 +1107,9 @@ private fun DrawScope.drawNormalCourtMap(
         useCenter = false,
         topLeft = Offset(
             freeThrowCenter.x -
-                    rFT,
+                rFT,
             freeThrowCenter.y -
-                    rFT
+                rFT
         ),
         size = Size(
             2f * rFT,
@@ -1260,12 +1260,12 @@ private fun DrawScope.drawNormalCourtMap(
         color = lineColor,
         start = Offset(
             hoopCenterX -
-                    hoopLineWidth / 2f,
+                hoopLineWidth / 2f,
             hoopY
         ),
         end = Offset(
             hoopCenterX +
-                    hoopLineWidth / 2f,
+                hoopLineWidth / 2f,
             hoopY
         ),
         strokeWidth =
@@ -1278,7 +1278,7 @@ private fun DrawScope.drawNormalCourtMap(
         center = Offset(
             hoopCenterX,
             hoopY -
-                    hoopRadius * 1.8f
+                hoopRadius * 1.8f
         ),
         style = stroke
     )
@@ -1293,47 +1293,47 @@ private fun Sessio?.zoneMadeAttempted(
     return when (zone) {
         1 ->
             session.fets_pos_1 to
-                    session.tirs_pos_1
+                session.tirs_pos_1
 
         2 ->
             session.fets_pos_2 to
-                    session.tirs_pos_2
+                session.tirs_pos_2
 
         3 ->
             session.fets_pos_3 to
-                    session.tirs_pos_3
+                session.tirs_pos_3
 
         4 ->
             session.fets_pos_4 to
-                    session.tirs_pos_4
+                session.tirs_pos_4
 
         5 ->
             session.fets_pos_5 to
-                    session.tirs_pos_5
+                session.tirs_pos_5
 
         6 ->
             session.fets_pos_6 to
-                    session.tirs_pos_6
+                session.tirs_pos_6
 
         7 ->
             session.fets_pos_7 to
-                    session.tirs_pos_7
+                session.tirs_pos_7
 
         8 ->
             session.fets_pos_8 to
-                    session.tirs_pos_8
+                session.tirs_pos_8
 
         9 ->
             session.fets_pos_9 to
-                    session.tirs_pos_9
+                session.tirs_pos_9
 
         10 ->
             session.fets_pos_10 to
-                    session.tirs_pos_10
+                session.tirs_pos_10
 
         11 ->
             session.fets_pos_11 to
-                    session.tirs_pos_11
+                session.tirs_pos_11
 
         else ->
             0 to 0
@@ -1621,15 +1621,15 @@ private fun detectZone(
 
     val freeThrowRadius =
         (paintRight -
-                paintLeft) / 2f
+            paintLeft) / 2f
 
     val leftArcX =
         bigCenterX -
-                threePointRadius
+            threePointRadius
 
     val rightArcX =
         bigCenterX +
-                threePointRadius
+            threePointRadius
 
     val dxBig =
         x - bigCenterX
@@ -1640,7 +1640,7 @@ private fun detectZone(
     val bigDistance =
         sqrt(
             dxBig * dxBig +
-                    dyBig * dyBig
+                dyBig * dyBig
         )
 
     val dxFree =
@@ -1652,7 +1652,7 @@ private fun detectZone(
     val freeDistance =
         sqrt(
             dxFree * dxFree +
-                    dyFree * dyFree
+                dyFree * dyFree
         )
 
     if (
@@ -1695,7 +1695,7 @@ private fun detectZone(
     if (x < paintLeft) {
         return when {
             x < leftArcX &&
-                    y < lowerSplitY ->
+                y < lowerSplitY ->
                 1
 
             x < leftArcX ->
@@ -2032,7 +2032,7 @@ private fun ZoneInputDialog(
                                 )
 
                             madeValue >
-                                    attemptedValue ->
+                                attemptedValue ->
                                 shotText(
                                     R.string
                                         .error_more_made_than_attempted

@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">ShooterRanking2</string>
+    <string name="back">Volver</string>
     <string name="settings">Configuración</string>
     <string name="change_language">Cambiar idioma</string>
     <string name="select_language">Selecciona el idioma</string>
@@ -53,7 +54,7 @@
     <string name="delete_season_question">¿Quieres eliminar la temporada «%1$s»?</string>
     <string name="will_delete_following">Se eliminará lo siguiente:</string>
     <string name="teams_count">Equipos: %1$d</string>
-    <string name="players_count">Jugadoras: %1$d</string>
+    <string name="players_count">Jugadores: %1$d</string>
     <string name="total_sessions_count">Sesiones totales: %1$d</string>
     <string name="cannot_undo">Esta acción no se puede deshacer.</string>
     <string name="season_deleted">Temporada eliminada</string>
@@ -65,19 +66,19 @@
     <string name="court_type">Tipo de pista</string>
     <string name="court_type_locked">No se puede cambiar el tipo de pista porque este equipo ya tiene sesiones de tiro registradas.</string>
     <string name="court_base">Base</string>
-    <string name="court_amateur">Amateur</string>
+    <string name="court_amateur">FIBA</string>
     <string name="court_pro">Pro</string>
     <string name="delete_team_question">¿Quieres eliminar el equipo «%1$s»?</string>
     <string name="team_deleted">Equipo eliminado</string>
-    <string name="add_player">Añadir jugadora</string>
-    <string name="edit_player">Editar jugadora</string>
-    <string name="delete_player">Eliminar jugadora</string>
+    <string name="add_player">Añadir jugador</string>
+    <string name="edit_player">Editar jugador</string>
+    <string name="delete_player">Eliminar jugador</string>
     <string name="delete_player_question">¿Quieres eliminar a %1$s? También se eliminarán todas sus sesiones de tiro.</string>
-    <string name="no_players">Todavía no hay jugadoras.</string>
-    <string name="no_players_in_team">Este equipo todavía no tiene jugadoras.</string>
-    <string name="no_players_to_export">No hay jugadoras para exportar.</string>
-    <string name="player">Jugadora</string>
-    <string name="player_fallback">Jugadora</string>
+    <string name="no_players">Todavía no hay jugadores.</string>
+    <string name="no_players_in_team">Este equipo todavía no tiene jugadores.</string>
+    <string name="no_players_to_export">No hay jugadores para exportar.</string>
+    <string name="player">Jugador</string>
+    <string name="player_fallback">Jugador</string>
     <string name="name">Nombre</string>
     <string name="jersey_number">Dorsal</string>
     <string name="jersey_number_range">Dorsal (0–100)</string>
@@ -99,7 +100,7 @@
     <string name="filter_three_pointers">Triples</string>
     <string name="filter_two_pointers">Tiros de 2</string>
     <string name="export_team_pdf">Exportar equipo a PDF</string>
-    <string name="error_loading_players">Error al cargar las jugadoras.</string>
+    <string name="error_loading_players">Error al cargar los jugadores.</string>
     <string name="new_session">Nueva sesión (%1$d)</string>
     <string name="session_number">Sesión %1$d</string>
     <string name="no_saved_sessions">No hay sesiones guardadas.</string>
@@ -129,7 +130,7 @@
     <string name="zone_low_post_left">Poste bajo izquierdo</string>
     <string name="player_statistics_title">Estadísticas · %1$s</string>
     <string name="error_loading_sessions">Error al cargar las sesiones.</string>
-    <string name="no_player_sessions">Esta jugadora todavía no tiene sesiones.</string>
+    <string name="no_player_sessions">Este jugador todavía no tiene sesiones.</string>
     <string name="progress_chart_by_session">Gráfico de progreso por sesiones</string>
     <string name="sessions_table">Tabla por sesiones</string>
     <string name="export_statistics_pdf">Exportar estadísticas a PDF</string>
@@ -150,9 +151,9 @@
     <string name="global_shot_map">Mapa de tiro global</string>
     <string name="sessions_chart">Gráfico de sesiones</string>
     <string name="team_statistics">Estadísticas del equipo</string>
-    <string name="team_chart_and_global_table">Gráfico de sesiones y tabla global por jugadoras</string>
-    <string name="global_players_table">Tabla global por jugadoras</string>
-    <string name="global_players_table_continued">Tabla global por jugadoras (continuación)</string>
+    <string name="team_chart_and_global_table">Gráfico de sesiones y tabla global por jugadores</string>
+    <string name="global_players_table">Tabla global por jugadores</string>
+    <string name="global_players_table_continued">Tabla global por jugadores (continuación)</string>
     <string name="player_pdf_summary">Gráfico, mapa de tiro global y tabla por sesiones</string>
     <string name="player_pdf_summary_continued">Gráfico, mapa de tiro global y tabla por sesiones (continuación)</string>
     <string name="team_total">TOTAL EQUIPO</string>
@@ -182,7 +183,7 @@
     <string name="error_username_exists">Este nombre de usuario ya existe.</string>
     <string name="error_create_season">No se ha podido crear la temporada.</string>
     <string name="error_create_team">No se ha podido crear el equipo.</string>
-    <string name="error_create_player">No se ha podido crear la jugadora.</string>
+    <string name="error_create_player">No se ha podido crear el jugador.</string>
     <string name="error_save_session">No se ha podido guardar la sesión.</string>
     <string name="error_session_not_found">No se ha encontrado la sesión que se debe eliminar.</string>
     <string name="error_update_season">No se ha podido actualizar la temporada.</string>
@@ -190,7 +191,7 @@
     <string name="error_delete_season">No se ha podido eliminar la temporada.</string>
     <string name="error_update_team">No se ha podido actualizar el equipo.</string>
     <string name="error_delete_team">No se ha podido eliminar el equipo.</string>
-    <string name="error_delete_player">No se ha podido eliminar la jugadora.</string>
+    <string name="error_delete_player">No se ha podido eliminar el jugador.</string>
     <string name="error_firebase_init">No se ha podido inicializar Firebase. Revisa google-services.json.</string>
     <string name="firebase_not_initialized">Firebase no inicializado</string>
     <string name="delete_named_session_question">¿Quieres eliminar «%1$s»? Esta acción no se puede deshacer.</string>

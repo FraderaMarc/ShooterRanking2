@@ -151,9 +151,13 @@ object AppLanguageManager {
         @StringRes stringRes: Int,
         vararg args: Any
     ): String {
-        return localizedContext(context)
-            .resources
-            .getString(stringRes, *args)
+        val resources = localizedContext(context).resources
+
+        return if (args.isEmpty()) {
+            resources.getString(stringRes)
+        } else {
+            resources.getString(stringRes, *args)
+        }
     }
 
     private fun localizedContext(context: Context): Context {

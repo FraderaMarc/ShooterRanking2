@@ -8,7 +8,6 @@ import com.marcfradera.shooterranking.shared.NavigationSharedViewModel
 import com.marcfradera.shooterranking.ui.screens.JugadorsRankingScreen
 
 class RankingFragment : BaseComposeFragment() {
-
     private val shared by activityViewModels<NavigationSharedViewModel>()
 
     @Composable

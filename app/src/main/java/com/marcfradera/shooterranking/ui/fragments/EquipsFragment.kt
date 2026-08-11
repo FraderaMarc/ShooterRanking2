@@ -163,7 +163,21 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
         canEditTipusPista: Boolean
     ) {
         val context = requireContext()
-        var tipusPistaSeleccionat = initialTipusPista.ifBlank { "Base" }
+        val normalizedTipusPista = when (initialTipusPista) {
+            "Amateur", "Pro" -> "Amateur"
+            else -> "Base"
+        }
+
+        /*
+         * Si el tipo está bloqueado por sesiones existentes, conservamos el valor
+         * real almacenado para que editar solamente el nombre no cambie la pista.
+         */
+        var tipusPistaSeleccionat = if (canEditTipusPista) {
+            normalizedTipusPista
+        } else {
+            initialTipusPista.ifBlank { "Base" }
+        }
+
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             val pad = (20 * resources.displayMetrics.density).toInt()
@@ -174,7 +188,10 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             setText(initialNomEquip)
             setSelection(text.length)
         }
-        val tipusPistaView = createTipusPistaSelector(tipusPistaSeleccionat, canEditTipusPista) {
+        val tipusPistaView = createTipusPistaSelector(
+            normalizedTipusPista,
+            canEditTipusPista
+        ) {
             tipusPistaSeleccionat = it
         }
         container.addView(nomEdit)
@@ -248,8 +265,7 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
         val baseButtonId = View.generateViewId()
-        val amateurButtonId = View.generateViewId()
-        val proButtonId = View.generateViewId()
+        val fibaButtonId = View.generateViewId()
 
         fun createButton(idValue: Int, labelRes: Int): MaterialButton = MaterialButton(
             context,
@@ -261,26 +277,33 @@ class EquipsFragment : Fragment(R.layout.fragment_recycler_screen) {
             isCheckable = true
             isEnabled = enabled
             isAllCaps = false
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
 
         toggleGroup.addView(createButton(baseButtonId, R.string.court_base))
-        toggleGroup.addView(createButton(amateurButtonId, R.string.court_amateur))
-        toggleGroup.addView(createButton(proButtonId, R.string.court_pro))
+        toggleGroup.addView(createButton(fibaButtonId, R.string.court_amateur))
 
+        /*
+         * "Amateur" se conserva como valor interno para mantener compatibilidad
+         * con equipos y sesiones ya guardados. En la interfaz ahora se muestra FIBA.
+         * Los antiguos equipos "Pro" se muestran como FIBA en el selector.
+         */
         toggleGroup.check(
             when (initialTipusPista) {
-                "Amateur" -> amateurButtonId
-                "Pro" -> proButtonId
+                "Amateur", "Pro" -> fibaButtonId
                 else -> baseButtonId
             }
         )
+
         toggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
+
             onSelected(
                 when (checkedId) {
-                    amateurButtonId -> "Amateur"
-                    proButtonId -> "Pro"
+                    fibaButtonId -> "Amateur"
                     else -> "Base"
                 }
             )
