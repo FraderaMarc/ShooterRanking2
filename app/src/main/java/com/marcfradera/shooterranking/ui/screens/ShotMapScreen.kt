@@ -78,7 +78,10 @@ fun ShotMapScreen(
     initialJugadorId: String,
     initialJugadorNom: String,
     onBack: () -> Unit,
-    onJugadorChanged: (String, String) -> Unit
+    onJugadorChanged: (String, String) -> Unit,
+    forcedTipusPista: String? = null,
+    lockPlayer: Boolean = false,
+    topContent: (@Composable () -> Unit)? = null
 ) {
     val sessionsVm: ShotSessionViewModel = viewModel()
     val playersVm: JugadorsViewModel = viewModel()
@@ -98,7 +101,9 @@ fun ShotMapScreen(
     // hasta pulsar explícitamente "Guardar sesión".
     var sessionNameInput by remember { mutableStateOf("") }
 
-    var tipusPista by remember(idEquip) { mutableStateOf("FIBA") }
+    var tipusPista by remember(idEquip, forcedTipusPista, lockPlayer) {
+        mutableStateOf(forcedTipusPista ?: "FIBA")
+    }
     var screenActive by remember { mutableStateOf(true) }
 
     DisposableEffect(Unit) {
@@ -108,25 +113,38 @@ fun ShotMapScreen(
         }
     }
 
-    LaunchedEffect(idEquip) {
-        playersVm.load(idEquip)
+    LaunchedEffect(idEquip, forcedTipusPista, lockPlayer) {
+        if (lockPlayer) {
+            tipusPista = forcedTipusPista ?: "FIBA"
+        } else {
+            playersVm.load(idEquip)
 
-        tipusPista = try {
-            FirebaseProvider.firestore
-                .collection("equips")
-                .document(idEquip)
-                .get()
-                .await()
-                .getString("tipus_pista")
-                ?.takeIf { it.isNotBlank() }
-                ?: "FIBA"
-        } catch (_: Exception) {
-            "FIBA"
+            tipusPista = try {
+                FirebaseProvider.firestore
+                    .collection("equips")
+                    .document(idEquip)
+                    .get()
+                    .await()
+                    .getString("tipus_pista")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "FIBA"
+            } catch (_: Exception) {
+                "FIBA"
+            }
         }
     }
 
-    val players = (playersVm.state.data ?: emptyList())
-        .sortedBy { it.nom_jugador.lowercase() }
+    val players = if (lockPlayer) {
+        listOf(
+            Jugador(
+                id_jugador = initialJugadorId,
+                nom_jugador = initialJugadorNom
+            )
+        )
+    } else {
+        (playersVm.state.data ?: emptyList())
+            .sortedBy { it.nom_jugador.lowercase() }
+    }
 
     LaunchedEffect(players, initialJugadorId, initialJugadorNom) {
         if (players.isEmpty()) return@LaunchedEffect
@@ -253,36 +271,49 @@ fun ShotMapScreen(
     CenteredScaffold(
         onBack = onBack,
         titleContent = {
-            ShotMapTitle(
-                currentPlayerName = selectedJugadorNom.ifBlank {
-                    shotText(R.string.player_fallback)
-                },
-                expanded = playersExpanded,
-                onToggleExpanded = {
-                    if (!isSaving) {
-                        playersExpanded = !playersExpanded
-                    }
-                },
-                onDismissPlayers = {
-                    playersExpanded = false
-                },
-                players = players,
-                onSelectPlayer = { player ->
-                    if (!isSaving) {
-                        selectedJugadorId = player.id_jugador
-                        selectedJugadorNom = player.nom_jugador
+            if (lockPlayer) {
+                Text(
+                    text = shotText(R.string.shot_map),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            } else {
+                ShotMapTitle(
+                    currentPlayerName = selectedJugadorNom.ifBlank {
+                        shotText(R.string.player_fallback)
+                    },
+                    expanded = playersExpanded,
+                    onToggleExpanded = {
+                        if (!isSaving) {
+                            playersExpanded = !playersExpanded
+                        }
+                    },
+                    onDismissPlayers = {
                         playersExpanded = false
-                        onJugadorChanged(
-                            player.id_jugador,
-                            player.nom_jugador
-                        )
+                    },
+                    players = players,
+                    onSelectPlayer = { player ->
+                        if (!isSaving) {
+                            selectedJugadorId = player.id_jugador
+                            selectedJugadorNom = player.nom_jugador
+                            playersExpanded = false
+                            onJugadorChanged(
+                                player.id_jugador,
+                                player.nom_jugador
+                            )
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) {
+        topContent?.invoke()
+        if (topContent != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         when {
-            playersVm.state.loading && players.isEmpty() -> {
+            !lockPlayer && playersVm.state.loading && players.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -293,7 +324,7 @@ fun ShotMapScreen(
                 }
             }
 
-            playersVm.state.error != null && players.isEmpty() -> {
+            !lockPlayer && playersVm.state.error != null && players.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

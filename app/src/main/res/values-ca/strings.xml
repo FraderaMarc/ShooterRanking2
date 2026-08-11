@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ShooterRanking2</string>
+    <string name="app_name">Shooter Ranking</string>
     <string name="back">Enrere</string>
     <string name="settings">Configuració</string>
     <string name="change_language">Canviar idioma</string>
@@ -217,4 +217,15 @@
     <string name="terms_conditions_body" formatted="false">TERMES I CONDICIONS DE SHOOTER RANKING\nVersió 1.0 · 9 d’agost de 2026\n\n1. TITULAR\nShooter Ranking és gestionada per Marc Fradera Bigas. Contacte: info@shooterranking.com.\n\n2. OBJECTE I COMPTE\nL’app permet organitzar temporades, equips i jugadors, registrar sessions i tirs, consultar estadístiques i generar PDF. Algunes funcions requereixen crear un compte i verificar el correu electrònic. L’usuari ha de proporcionar informació correcta, protegir les credencials i no pot suplantar identitats ni utilitzar comptes fraudulentament.\n\n3. DADES INTRODUÏDES I TERCERS\nL’usuari conserva els drets que li corresponguin sobre la informació introduïda i només autoritza el tractament tècnic necessari per prestar les funcions de l’app. Si introdueix dades de jugadors reals, és responsable de disposar d’una base legítima i ha d’evitar dades sensibles o innecessàries, especialment en el cas de menors.\n\n4. ESTADÍSTIQUES I PDF\nEls resultats depenen de les dades introduïdes i tenen finalitat esportiva i informativa. Quan un PDF es desa o comparteix fora de l’app, l’usuari és responsable del seu ús i ha d’estar autoritzat per compartir dades de tercers.\n\n5. ÚS PERMÈS I SUSPENSIÓ\nNo es permet eludir mesures de seguretat, accedir sense autorització a sistemes o dades, introduir codi maliciós, cometre frau, suplantar persones, vulnerar drets de tercers o realitzar activitats il·lícites. Un compte es pot limitar o suspendre per incompliments greus o reiterats, frau, riscos de seguretat o requeriments legals.\n\n6. ELIMINACIÓ DEL COMPTE\nL’usuari pot sol·licitar l’eliminació del compte. Això pot eliminar temporades, equips, jugadors, sessions i estadístiques vinculades, excepte informació que s’hagi de conservar legalment. L’eliminació pot ser irreversible.\n\n7. SERVEIS DE TERCERS, DISPONIBILITAT I ACTUALITZACIONS\nL’app pot utilitzar Firebase Authentication, Cloud Firestore i Google AdMob. Poden existir interrupcions per manteniment, actualitzacions, problemes tècnics, proveïdors externs o circumstàncies fora del control raonable del titular.\n\n8. PROPIETAT INTEL·LECTUAL I RESPONSABILITAT\nEl programari, disseny i elements propis de Shooter Ranking pertanyen al titular o s’utilitzen amb autorització. L’ús de l’app no transfereix la propietat. El servei es prestarà amb diligència raonable i res d’aquests termes limita drets o responsabilitats que legalment no es puguin excloure.\n\n9. PRIVACITAT I CANVIS\nEl tractament de dades personals es regula a la Política de Privacitat. Els termes poden actualitzar-se per motius funcionals, tècnics, de seguretat o legals. Es demanarà una nova acceptació quan legalment sigui necessària.\n\n10. LEGISLACIÓ I CONTACTE\nS’aplica la legislació espanyola sense perjudici de les normes imperatives de protecció de consumidors. Contacte: info@shooterranking.com.</string>
     <string name="close">Tancar</string>
     <string name="error_session_name_duplicate">Ja existeix una altra sessió amb aquest nom per a aquest jugador.</string>
+
+    <string name="home_title">Inici</string>
+    <string name="home_choose_mode">Com vols utilitzar Shooter Ranking?</string>
+    <string name="home_coach">Entrenador</string>
+    <string name="home_player">Jugador</string>
+    <string name="personal_player_setup_title">Crear el meu jugador</string>
+    <string name="personal_player_setup_intro">Completa les teves dades una sola vegada. Després entraràs directament a les teves estadístiques i al teu mapa de tir.</string>
+    <string name="personal_player_court_info">Selecciona el tipus de pista. Es farà servir per calcular els tirs de 2/3 punts i per dibuixar correctament el mapa de tir.</string>
+    <string name="personal_player_saving">Desant…</string>
+    <string name="personal_player_auth_required">Has d’iniciar sessió per utilitzar el teu perfil de jugador.</string>
+    <string name="email_not_verified_yet">El correu encara no està verificat. Confirma’l des de l’enllaç que t’hem enviat.</string>
 </resources>

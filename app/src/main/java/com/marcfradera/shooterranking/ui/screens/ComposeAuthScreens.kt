@@ -728,12 +728,19 @@ fun VerifyEmailScreen(onContinue: () -> Unit, onSignOut: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Button(
-            onClick = onContinue,
+            onClick = {
+                vm.confirmVerifiedEmailAndSignOut(onContinue)
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(56.dp),
+            enabled = !vm.loading
         ) {
-            Text(stringResource(R.string.already_confirmed).uppercase(), textAlign = TextAlign.Center, maxLines = 2)
+            Text(
+                stringResource(R.string.already_confirmed).uppercase(),
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
         }
         Spacer(Modifier.height(8.dp))
         Button(

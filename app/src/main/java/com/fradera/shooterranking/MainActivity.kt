@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
 
         val startDestination = when {
             authViewModel.isLoggedIn && authViewModel.emailConfirmed ->
-                R.id.temporadesFragment
+                R.id.homeFragment
             authViewModel.isLoggedIn && !authViewModel.emailConfirmed ->
                 R.id.verifyFragment
             else ->

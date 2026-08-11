@@ -10,7 +10,7 @@ class VerifyFragment : BaseComposeFragment() {
     override fun Render() {
         VerifyEmailScreen(
             onContinue = {
-                findNavController().navigate(R.id.action_verify_to_temporades)
+                findNavController().navigate(R.id.action_verify_to_login)
             },
             onSignOut = {
                 findNavController().popBackStack(R.id.welcomeFragment, false)

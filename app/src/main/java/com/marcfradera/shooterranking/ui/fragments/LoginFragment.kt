@@ -11,7 +11,7 @@ class LoginFragment : BaseComposeFragment() {
         LoginScreen(
             onBack = { findNavController().popBackStack() },
             onLoggedIn = {
-                findNavController().navigate(R.id.action_login_to_temporades)
+                findNavController().navigate(R.id.action_login_to_home)
             }
         )
     }

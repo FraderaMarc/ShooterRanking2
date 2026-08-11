@@ -142,6 +142,45 @@ class AuthViewModel(
         }
     }
 
+    fun confirmVerifiedEmailAndSignOut(onVerified: () -> Unit) = viewModelScope.launch {
+        error = null
+        loading = true
+
+        try {
+            /*
+             * Firebase puede mantener en memoria el estado anterior del usuario.
+             * Recargamos antes de consultar isEmailVerified para comprobar
+             * realmente que el enlace de verificación ya se ha confirmado.
+             */
+            repo.reloadCurrentUser()
+
+            isLoggedIn = repo.isLoggedIn()
+            emailConfirmed = repo.isEmailConfirmed()
+            currentEmail = repo.currentUserEmail()
+
+            if (!emailConfirmed) {
+                error = AppLanguageManager.text(R.string.email_not_verified_yet)
+                return@launch
+            }
+
+            /*
+             * El correo está correctamente verificado. Cerramos la sesión creada
+             * durante el registro para que el usuario tenga que iniciar sesión
+             * manualmente con su cuenta nueva.
+             */
+            repo.signOut()
+            isLoggedIn = false
+            emailConfirmed = false
+            currentEmail = ""
+
+            onVerified()
+        } catch (e: Exception) {
+            error = e.message
+        } finally {
+            loading = false
+        }
+    }
+
     fun signOut(onDone: () -> Unit) = viewModelScope.launch {
         error = null
         loading = true

@@ -124,16 +124,18 @@ private val BestZoneColumnWidth = 180.dp
 fun PlayerStatsScreen(
     idJugador: String,
     nomJugador: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    forcedTipusPista: String? = null,
+    topContent: (@Composable () -> Unit)? = null
 ) {
     val vm: ShotSessionViewModel = viewModel()
     var selectedFilter by remember { mutableStateOf(StatsFilter.ALL) }
     val context = LocalContext.current
     var tipusPista by remember(idJugador) { mutableStateOf("Amateur") }
 
-    LaunchedEffect(idJugador) {
+    LaunchedEffect(idJugador, forcedTipusPista) {
         vm.load(idJugador)
-        tipusPista = loadTipusPistaByJugador(idJugador)
+        tipusPista = forcedTipusPista ?: loadTipusPistaByJugador(idJugador)
     }
 
     val sessionsState = vm.sessions
@@ -179,6 +181,11 @@ fun PlayerStatsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp)
         ) {
+            topContent?.invoke()
+            if (topContent != null) {
+                Spacer(Modifier.height(12.dp))
+            }
+
             when {
                 sessionsState.loading -> {
                     Box(

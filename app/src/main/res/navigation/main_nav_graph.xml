@@ -7,11 +7,10 @@
     <fragment android:id="@+id/welcomeFragment" android:name="com.marcfradera.shooterranking.ui.fragments.WelcomeFragment" android:label="@string/welcome">
         <action android:id="@+id/action_welcome_to_login" app:destination="@id/loginFragment" />
         <action android:id="@+id/action_welcome_to_signup" app:destination="@id/signupFragment" />
-        <action android:id="@+id/action_welcome_to_temporades" app:destination="@id/temporadesFragment" />
     </fragment>
 
     <fragment android:id="@+id/loginFragment" android:name="com.marcfradera.shooterranking.ui.fragments.LoginFragment" android:label="@string/login">
-        <action android:id="@+id/action_login_to_temporades" app:destination="@id/temporadesFragment" />
+        <action android:id="@+id/action_login_to_home" app:destination="@id/homeFragment" app:popUpTo="@id/welcomeFragment" app:popUpToInclusive="true" />
         <action android:id="@+id/action_login_to_verify" app:destination="@id/verifyFragment" />
     </fragment>
 
@@ -20,8 +19,19 @@
     </fragment>
 
     <fragment android:id="@+id/verifyFragment" android:name="com.marcfradera.shooterranking.ui.fragments.VerifyFragment" android:label="@string/verification">
-        <action android:id="@+id/action_verify_to_temporades" app:destination="@id/temporadesFragment" />
+        <action
+            android:id="@+id/action_verify_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/welcomeFragment"
+            app:popUpToInclusive="false" />
     </fragment>
+
+    <fragment android:id="@+id/homeFragment" android:name="com.marcfradera.shooterranking.ui.fragments.HomeFragment" android:label="@string/home_title">
+        <action android:id="@+id/action_home_to_temporades" app:destination="@id/temporadesFragment" />
+        <action android:id="@+id/action_home_to_personal_player" app:destination="@id/personalPlayerFragment" />
+    </fragment>
+
+    <fragment android:id="@+id/personalPlayerFragment" android:name="com.marcfradera.shooterranking.ui.fragments.PersonalPlayerFragment" android:label="@string/home_player" />
 
     <fragment android:id="@+id/temporadesFragment" android:name="com.marcfradera.shooterranking.ui.fragments.TemporadesFragment" android:label="@string/seasons">
         <action android:id="@+id/action_temporades_to_equips" app:destination="@id/equipsFragment" />
