@@ -1153,7 +1153,7 @@ private fun drawTeamPlayerPages(
     val pageWidth = 1650
     val pageHeight = 1000
     val columns = listOf(
-        RankingPdfColumn(rankingText(R.string.session_header), 180f),
+        RankingPdfColumn(rankingText(R.string.session_header), 130f),
         RankingPdfColumn(rankingText(R.string.free_throw_short), 85f),
         RankingPdfColumn(rankingText(R.string.free_throw_percent_short), 70f),
         RankingPdfColumn(rankingText(R.string.two_point_short), 85f),
@@ -1420,39 +1420,30 @@ private fun drawRankingPdfSessionNameFitted(
     text: String,
     rect: RectF,
     paint: Paint,
-    horizontalPadding: Float = 4f,
-    minTextSize: Float = 9f
+    horizontalPadding: Float = 4f
 ) {
-    val originalSize = paint.textSize
     val availableWidth = (rect.width() - horizontalPadding * 2f).coerceAtLeast(1f)
-
-    while (paint.measureText(text) > availableWidth && paint.textSize > minTextSize) {
-        paint.textSize -= 0.5f
-    }
+    val ellipsis = "…"
 
     var fittedText = text
 
     if (paint.measureText(fittedText) > availableWidth) {
-        val ellipsis = "…"
-
         while (
             fittedText.length > 1 &&
-            paint.measureText(fittedText.dropLast(1).trimEnd() + ellipsis) > availableWidth
+            paint.measureText(fittedText.trimEnd() + ellipsis) > availableWidth
         ) {
             fittedText = fittedText.dropLast(1)
         }
 
         fittedText = fittedText.trimEnd()
-        fittedText = if (fittedText.length > 1) {
-            fittedText.dropLast(1).trimEnd() + ellipsis
-        } else {
-            ellipsis
+
+        if (fittedText != text) {
+            fittedText += ellipsis
         }
     }
 
     val textY = rect.centerY() - (paint.descent() + paint.ascent()) / 2f
     canvas.drawText(fittedText, rect.left + horizontalPadding, textY, paint)
-    paint.textSize = originalSize
 }
 
 private fun drawRankingPdfTableHeader(
