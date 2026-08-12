@@ -1,0 +1,22 @@
+FIX DE COMPILACIÓ KOTLIN
+
+Error original:
+TotalShotMapScreen.kt:1385
+# outer grid
+
+Causa:
+S'havia colat un comentari amb sintaxi Python dins d'un fitxer Kotlin.
+
+Correcció:
+# outer grid
+s'ha canviat per:
+// Outer grid
+
+Comprovacions addicionals:
+- Escanejats tots els .kt del projecte: no queda cap línia de comentari amb #.
+- XML vàlids.
+- Strings ES/CA/EN/FR amb les mateixes claus.
+- Disseny del post reestilitzat preservat.
+- Taula d'estadístiques totals preservada.
+- Traduccions preservades.
+- Mapa total i compartició PNG preservats.

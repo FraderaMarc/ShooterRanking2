@@ -1,0 +1,21 @@
+VALIDACIÓN ESTÁTICA - HOME + MODO JUGADOR
+
+Base: 9025c30da9fb2fdbdf2172b7d1d611460825c9bd - Correccions taule
+Resultado: OK
+
+[OK] XML válidos: 19
+[OK] Strings ES/CA/EN/FR: 226 claves por idioma
+[OK] Referencias R.string
+[OK] Navegación Home / Entrenador / Jugador
+[OK] Perfil personal aislado de equipos
+[OK] Estadísticas existentes reutilizadas
+[OK] Mapa existente reutilizado
+[OK] Base/FIBA forzado para el perfil personal
+[OK] Pestañas Estadísticas / Mapa
+[OK] nom_sessio personalizado conservado
+[OK] Tabla de sesión 130dp/f y elipsis conservada
+[OK] Flujo Entrenador conservado
+[OK] Sin duplicados drawable por nombre
+[OK] Sintaxis estructural Kotlin: 41 archivos
+
+No se ejecutó build Android completo: no hay Android SDK/Gradle en el entorno.

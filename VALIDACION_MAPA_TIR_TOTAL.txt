@@ -1,0 +1,65 @@
+VALIDACIÓ - MAPA DE TIR TOTAL + POST
+
+Base GitHub:
+c5ac88913e3cbfbcdc236ba83825339605a86e2a
+Commit: Pagina principal
+
+IMPLEMENTAT
+-----------
+- Botó "Veure mapa de tir" sota "Exportar estadístiques".
+- Apareix tant al mode Entrenador com al mode Jugador.
+- Nova pantalla separada i només de lectura.
+- El mapa suma els encerts i intents de TOTES les sessions.
+- No calcula una mitjana de percentatges.
+  Exemple: 5/10 + 5/10 + 5/10 = 15/30 = 50%.
+- Cada zona es pinta amb els mateixos llindars de color de l'app:
+  vermell < 33%, groc 33%-66%, verd > 66%, blanc sense tirs.
+- TL/T2/T3 respecten la mateixa classificació Base/FIBA de l'app.
+- Botó Compartir sota el mapa.
+- El post compartit és una imatge PNG vertical 1080x1620 (2:3).
+- El post inclou:
+  * capçalera Shooter Ranking
+  * mapa de tir acumulat
+  * nom del jugador
+  * posició
+  * dorsal
+  * TL: percentatge i encerts/intents
+  * T2: percentatge i encerts/intents
+  * T3: percentatge i encerts/intents
+
+FITXERS EXISTENTS MODIFICATS
+----------------------------
+- ui/screens/JugadorsRankingScreen.kt
+- ui/fragments/PlayerStatsFragment.kt
+- ui/fragments/PersonalPlayerFragment.kt
+- res/navigation/main_nav_graph.xml
+- strings.xml (ES/default, CA, EN, FR)
+
+FITXERS NOUS
+------------
+- ui/screens/TotalShotMapScreen.kt
+- ui/fragments/TotalShotMapFragment.kt
+
+PRESERVAT
+---------
+- ShotMapScreen.kt editable existent: sense canvis.
+- PlayerStatsScreen.kt físic (ranking/PDF equip): sense canvis.
+- Home: sense canvis.
+- Login/verificació: sense canvis.
+- PDFs existents: sense canvis.
+- Noms personalitzats de sessions: preservats.
+- Mode Base/FIBA existent: preservat.
+
+VALIDACIÓ ESTÀTICA
+------------------
+- XML vàlids.
+- 5 idiomes amb les mateixes claus.
+- Sense R.string inexistents.
+- Navegació nova resolta.
+- Mapa total sense gestos d'edició.
+- FileProvider existent per compartir PNG.
+
+Nota:
+Aquest entorn no disposa del conjunt complet Android SDK/Gradle per executar
+un assembleDebug real. S'ha fet validació estàtica de recursos, navegació,
+referències i estructura Kotlin.

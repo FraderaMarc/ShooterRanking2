@@ -1,0 +1,29 @@
+ERROR DE COMPILACIÓ LOCAL - SOLUCIÓ
+
+El log mostrava dos MainActivity compilant amb el mateix package:
+
+1) CORRECTE / CONSERVAR:
+app/src/main/java/com/fradera/shooterranking/MainActivity.kt
+
+2) SOBRANT / ELIMINAR:
+app/src/main/java/com/marcfradera/shooterranking/MainActivity.kt
+
+També cal eliminar aquest fitxer/carpeta local sobrant si existeix:
+app/src/main/java/com/marcfradera/shooterranking/security/AppCheckInitializer.kt
+o, si no hi ha res més necessari dins:
+app/src/main/java/com/marcfradera/shooterranking/security/
+
+Aquests fitxers no formen part de la versió del Git presa com a base.
+
+IMPORTANT:
+- Obre aquesta còpia en una CARPETA NOVA.
+- No la copiïs per sobre del projecte antic, perquè els fitxers sobrants no
+  s'eliminen en sobrescriure.
+- Després: Build > Clean Project > Rebuild Project.
+
+VALIDACIÓ D'AQUESTA CÒPIA:
+- MainActivity trobats: 1
+- AppCheckInitializer: 0
+- FirebaseAppCheck / PlayIntegrity: 0
+- AdsConsentManager: 0
+- BuildConfig referenciat en Kotlin: 0

@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function createsOwnDocument() {
+      return signedIn() && request.resource.data.userId == request.auth.uid;
+    }
+    function ownsDocument() {
+      return signedIn() && resource.data.userId == request.auth.uid;
+    }
+    function keepsOwnership() {
+      return ownsDocument() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow read, create, update, delete: if signedIn() && uid == request.auth.uid;
+    }
+
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /temporades/{id} {
+      allow create: if createsOwnDocument();
+      allow read, delete: if ownsDocument();
+      allow update: if keepsOwnership();
+    }
+    match /equips/{id} {
+      allow create: if createsOwnDocument();
+      allow read, delete: if ownsDocument();
+      allow update: if keepsOwnership();
+    }
+    match /jugadors/{id} {
+      allow create: if createsOwnDocument();
+      allow read, delete: if ownsDocument();
+      allow update: if keepsOwnership();
+    }
+    match /sessions/{id} {
+      allow create: if createsOwnDocument();
+      allow read, delete: if ownsDocument();
+      allow update: if keepsOwnership();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

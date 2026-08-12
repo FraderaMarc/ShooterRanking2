@@ -1,0 +1,15 @@
+CANVIS APLICATS AL POST DE COMPARTIR
+
+- "Estadístiques totals" ara es renderitza com una taula real.
+- Títol/capçalera més petita.
+- Separació visual més gran entre la capçalera i el mapa de tir.
+- Nom / posició / dorsal amb estil de lletra més elegant.
+- Fons del post igualat al blau fosc de la imatge del títol (#292F59).
+- Les etiquetes del post continuen llegint-se de strings.xml:
+  per tant, si l'app està en anglès, català, castellà o francès,
+  la imatge compartida també es tradueix.
+
+NOUES CLAUS DE STRINGS
+- total_shot_table_type
+- total_shot_table_percentage
+- total_shot_table_made_attempted

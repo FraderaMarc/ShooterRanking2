@@ -1,0 +1,15 @@
+# Copy this file to playstore.properties (ignored by Git) and fill only local values.
+# Never commit your keystore or passwords.
+
+# AdMob production IDs. Release ads remain disabled if either is blank.
+SHOOTER_ADMOB_APP_ID=
+SHOOTER_ADMOB_BANNER_ID=
+
+# Enable only AFTER registering Play Integrity in Firebase App Check and testing it.
+SHOOTER_APP_CHECK_ENABLED=false
+
+# Optional release signing. Paths may be absolute or relative to the project root.
+SHOOTER_KEYSTORE_FILE=
+SHOOTER_KEYSTORE_PASSWORD=
+SHOOTER_KEY_ALIAS=
+SHOOTER_KEY_PASSWORD=
