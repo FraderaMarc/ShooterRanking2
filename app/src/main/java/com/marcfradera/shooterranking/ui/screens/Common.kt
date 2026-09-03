@@ -25,10 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.marcfradera.shooterranking.R
-import com.marcfradera.shooterranking.localization.AppSettingsDialogs
-import com.marcfradera.shooterranking.ui.vm.AuthViewModel
+import com.marcfradera.shooterranking.SettingsActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,59 +34,92 @@ fun CenteredScaffold(
     title: String? = null,
     onBack: (() -> Unit)? = null,
     titleContent: (@Composable () -> Unit)? = null,
-    showSettings: Boolean = true,
+
+    // Por defecto NO mostramos configuración.
+    // Solo HomeScreen la activa explícitamente.
+    showSettings: Boolean = false,
+
     scrollableContent: Boolean = false,
     navigationExtra: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+
     val context = LocalContext.current
-    val authVm: AuthViewModel = viewModel()
-
-    fun restartApp() {
-        val launchIntent =
-            context.packageManager.getLaunchIntentForPackage(
-                context.packageName
-            )
-
-        launchIntent?.addFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_CLEAR_TASK
-        )
-
-        if (launchIntent != null) {
-            context.startActivity(launchIntent)
-        }
-    }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor =
+            MaterialTheme.colorScheme.background,
+
         topBar = {
+
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor =
+                            MaterialTheme.colorScheme.surface,
+
+                        titleContentColor =
+                            MaterialTheme.colorScheme.onSurface,
+
+                        navigationIconContentColor =
+                            MaterialTheme.colorScheme.onSurface,
+
+                        actionIconContentColor =
+                            MaterialTheme.colorScheme.onSurface
+                    ),
+
                 title = {
+
                     if (titleContent != null) {
+
                         titleContent()
+
                     } else {
-                        Text(title.orEmpty())
+
+                        Text(
+                            text = title.orEmpty()
+                        )
                     }
                 },
+
                 navigationIcon = {
-                    if (onBack != null || navigationExtra != null) {
+
+                    if (
+                        onBack != null ||
+                        navigationExtra != null
+                    ) {
+
                         Row(
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment =
+                                Alignment.CenterVertically
                         ) {
+
                             if (onBack != null) {
-                                IconButton(onClick = onBack) {
+
+                                IconButton(
+                                    onClick = onBack
+                                ) {
+
                                     Icon(
-                                        painter = painterResource(R.drawable.ic_back_sr),
-                                        contentDescription = stringResource(R.string.back),
-                                        modifier = Modifier.size(24.dp),
-                                        tint = MaterialTheme.colorScheme.onSurface
+                                        painter =
+                                            painterResource(
+                                                R.drawable.ic_back_sr
+                                            ),
+
+                                        contentDescription =
+                                            stringResource(
+                                                R.string.back
+                                            ),
+
+                                        modifier =
+                                            Modifier.size(
+                                                24.dp
+                                            ),
+
+                                        tint =
+                                            MaterialTheme
+                                                .colorScheme
+                                                .onSurface
                                     )
                                 }
                             }
@@ -97,22 +128,51 @@ fun CenteredScaffold(
                         }
                     }
                 },
+
                 actions = {
+
+                    /*
+                     * El botón de configuración solo aparece
+                     * cuando una pantalla lo solicita
+                     * explícitamente.
+                     *
+                     * Actualmente únicamente HomeScreen
+                     * utiliza showSettings = true.
+                     */
                     if (showSettings) {
+
                         IconButton(
                             onClick = {
-                                AppSettingsDialogs.showSettings(context) {
-                                    authVm.signOut {
-                                        restartApp()
-                                    }
-                                }
+
+                                context.startActivity(
+                                    Intent(
+                                        context,
+                                        SettingsActivity::class.java
+                                    )
+                                )
                             }
                         ) {
+
                             Icon(
-                                painter = painterResource(R.drawable.ic_settings_sr),
-                                contentDescription = stringResource(R.string.settings),
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSurface
+                                painter =
+                                    painterResource(
+                                        R.drawable.ic_settings_sr
+                                    ),
+
+                                contentDescription =
+                                    stringResource(
+                                        R.string.settings
+                                    ),
+
+                                modifier =
+                                    Modifier.size(
+                                        24.dp
+                                    ),
+
+                                tint =
+                                    MaterialTheme
+                                        .colorScheme
+                                        .onSurface
                             )
                         }
                     }
@@ -120,20 +180,27 @@ fun CenteredScaffold(
             )
         }
     ) { padding ->
+
         val contentModifier =
             Modifier
                 .fillMaxSize()
                 .background(
-                    MaterialTheme.colorScheme.background
+                    MaterialTheme
+                        .colorScheme
+                        .background
                 )
                 .padding(padding)
                 .padding(16.dp)
                 .let { base ->
+
                     if (scrollableContent) {
+
                         base.verticalScroll(
                             rememberScrollState()
                         )
+
                     } else {
+
                         base
                     }
                 }

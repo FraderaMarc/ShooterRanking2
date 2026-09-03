@@ -30,61 +30,135 @@ fun HomeScreen(
     onCoach: () -> Unit,
     onPlayer: () -> Unit
 ) {
+
     CenteredScaffold(
         title = null,
+
+        /*
+         * HomeScreen es la ÚNICA pantalla
+         * donde mostramos el botón
+         * de Configuración.
+         */
         showSettings = true
     ) {
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(
+                        vertical = 12.dp
+                    ),
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+
+            verticalArrangement =
+                Arrangement.Center
         ) {
-            /*
-             * La imagen ocupa directamente toda el área 16:7.
-             * No hay Card, fondo gris ni padding interior.
-             * Crop garantiza que el bitmap llena completamente el marco.
-             */
+
             Image(
-                painter = painterResource(R.drawable.titulo_sr),
-                contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f / 7f)
-                    .clip(RoundedCornerShape(20.dp)),
-                contentScale = ContentScale.Crop
+                painter =
+                    painterResource(
+                        R.drawable.titulo_sr
+                    ),
+
+                contentDescription =
+                    stringResource(
+                        R.string.app_name
+                    ),
+
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(
+                            16f / 7f
+                        )
+                        .clip(
+                            RoundedCornerShape(
+                                20.dp
+                            )
+                        ),
+
+                contentScale =
+                    ContentScale.Crop
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(
+                modifier =
+                    Modifier.height(
+                        24.dp
+                    )
+            )
 
             Text(
-                text = stringResource(R.string.home_choose_mode),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
+                text =
+                    stringResource(
+                        R.string.home_choose_mode
+                    ),
+
+                style =
+                    MaterialTheme
+                        .typography
+                        .titleMedium,
+
+                fontWeight =
+                    FontWeight.SemiBold,
+
+                textAlign =
+                    TextAlign.Center
             )
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(
+                modifier =
+                    Modifier.height(
+                        18.dp
+                    )
+            )
 
             Button(
                 onClick = onCoach,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp)
+
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(
+                            58.dp
+                        )
             ) {
-                Text(stringResource(R.string.home_coach))
+
+                Text(
+                    text =
+                        stringResource(
+                            R.string.home_coach
+                        )
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(
+                modifier =
+                    Modifier.height(
+                        12.dp
+                    )
+            )
 
             Button(
                 onClick = onPlayer,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp)
+
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(
+                            58.dp
+                        )
             ) {
-                Text(stringResource(R.string.home_player))
+
+                Text(
+                    text =
+                        stringResource(
+                            R.string.home_player
+                        )
+                )
             }
         }
     }
